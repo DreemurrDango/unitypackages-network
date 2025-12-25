@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Assets.Plugins.DreemurrStudio.Network
+namespace DreemurrStudio.Network
 {
     #region C/S架构消息模板
     //WORKFLOW: 添加服务器发送给客户端的网络消息的数据结构

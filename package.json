@@ -2,17 +2,18 @@
   "name": "com.dreemurrstudio.network",
   "version": "2.0.0",
   "displayName": "网络通信",
-  "description": "封装了用于局域网中双端进行UDP/TCP通信的功能，提供了便捷的功能接口与调试",
-  "unity": "2021.3",
+  "description": "为 Unity 项目提供了一套包含 TCP 和 UDP 的基础网络通信解决方案，旨在帮助开发者快速搭建客户端与服务器的通信原型，或实现局域网内的设备间通信。",
   "author": {
     "name": "DreemurrStudio",
     "email": "3011090456@qq.com",
-    "url": "https://www.dreemurrstudio.com"
+    "url": "https://gitee.com/RoastDango"
   },
   "keywords": [
     "TCP",
     "UDP",
     "LAN",
-    "Message"
+    "Message",
+    "Network",
+    "Socket"
   ]
 }

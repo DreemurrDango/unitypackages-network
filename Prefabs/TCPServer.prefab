@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &2074916784875201081
+--- !u!1 &4966404959925911634
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,22 +8,22 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 5818178112786011822}
-  - component: {fileID: 2645137917777297134}
+  - component: {fileID: 6779340566197155677}
+  - component: {fileID: 3957872553933794113}
   m_Layer: 0
-  m_Name: UDPController
+  m_Name: TCPServer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &5818178112786011822
+--- !u!4 &6779340566197155677
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2074916784875201081}
+  m_GameObject: {fileID: 4966404959925911634}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -32,27 +32,22 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2645137917777297134
+--- !u!114 &3957872553933794113
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2074916784875201081}
+  m_GameObject: {fileID: 4966404959925911634}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 294ca53d78fe9ef4ab335b1b4176f83c, type: 3}
+  m_Script: {fileID: 11500000, guid: b08149b0526e5d74d8a988e554d99df3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  localIP: 127.0.0.1
-  localPort: 8080
-  openOnAwake: 0
-  onReceiveMessage:
-    m_PersistentCalls:
-      m_Calls: []
+  port: 0
+  serverIP: 127.0.0.1
+  startOnStart: 1
   receiveIP: 127.0.0.1
   receivePort: 0
-  receivedMessage: "\u4F60\u4E5F\u597D\uFF0C\u4E16\u754C\uFF01"
-  targetIP: 127.0.0.1
-  targetPort: 8080
-  sendMessage: "\u4F60\u597D\uFF0C\u4E16\u754C\uFF01"
+  receivedMessage: "\u4F60\u597D\uFF0C\u670D\u52A1\u5668\uFF01\u6211\u662F\u5BA2\u6237\u7AEF"
+  sendMessage: "\u4F60\u597D\uFF0C\u5BA2\u6237\u7AEF\uFF01\u6211\u662F\u670D\u52A1\u5668"

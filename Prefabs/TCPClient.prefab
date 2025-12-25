@@ -46,9 +46,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   autoGetClientIPEP: 0
   clientIP: 127.0.0.1
-  clientPort: 8888
+  clientPort: 0
   connectOnStart: 1
   serverIP: 127.0.0.1
-  serverPort: 8888
-  receivedMessage: 
-  sendMessage: "\u6211\u662F\u5BA2\u6237\u7AEF\uFF01"
+  serverPort: 0
+  receivedMessage: "\u4F60\u597D\uFF0C\u5BA2\u6237\u7AEF\uFF01\u6211\u662F\u670D\u52A1\u5668"
+  sendMessage: "\u4F60\u597D\uFF0C\u670D\u52A1\u5668\uFF01\u6211\u662F\u5BA2\u6237\u7AEF"
