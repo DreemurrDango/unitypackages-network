@@ -1,0 +1,18 @@
+﻿{
+  "name": "com.dreemurrstudio.network",
+  "version": "2.0.0",
+  "displayName": "网络通信",
+  "description": "封装了用于局域网中双端进行UDP/TCP通信的功能，提供了便捷的功能接口与调试",
+  "unity": "2021.3",
+  "author": {
+    "name": "DreemurrStudio",
+    "email": "3011090456@qq.com",
+    "url": "https://www.dreemurrstudio.com"
+  },
+  "keywords": [
+    "TCP",
+    "UDP",
+    "LAN",
+    "Message"
+  ]
+}

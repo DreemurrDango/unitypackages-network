@@ -1,0 +1,16 @@
+{
+    "name": "DreemurrStudio.Network",
+    "rootNamespace": "DreemurrStudio.Network",
+    "references": [
+        "GUID:7fce0c1115269a0448efb3c01fa74bdb"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
