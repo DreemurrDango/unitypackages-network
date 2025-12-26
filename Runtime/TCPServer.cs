@@ -26,6 +26,8 @@ namespace DreemurrStudio.Network
 
         [Tooltip("收到消息时事件，参数为消息内容")]
         public Action<string> OnReceivedMessage;
+        [Tooltip("收到数据时事件，参数为发送端IPEndPoint和数据内容")]
+        public Action<IPEndPoint, byte[]> OnReceivedData;
 
         /// <summary>
         /// 是否正在运行TCP服务器
@@ -145,6 +147,8 @@ namespace DreemurrStudio.Network
                     {
                         int bytesRead = stream.Read(buffer, 0, buffer.Length);
                         if (bytesRead == 0) break; // 客户端断开
+                        OnReceivedData?.Invoke((IPEndPoint)client.Client.RemoteEndPoint, buffer[..bytesRead]);
+                        if(OnReceivedMessage == null) continue;
                         string message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
                         Debug.Log("收到客户端消息: " + message);
                         OnReceivedMessage?.Invoke(message);
@@ -162,7 +166,7 @@ namespace DreemurrStudio.Network
         /// 向特定客户端发送消息
         /// </summary>
         /// <param name="client">要发送的客户端目标</param>
-        /// <param name="message"></param>
+        /// <param name="message">要发送的客户端信息</param>
         public void SendToClient(TcpClient client, string message)
         {
             if (client == null || !client.Connected) return;
@@ -175,6 +179,32 @@ namespace DreemurrStudio.Network
                     if (!clients.TryGetValue(client, out stream)) return;
                 }
                 stream.Write(data, 0, data.Length);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("发送消息失败: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// 向特定客户端发送原始字节数据
+        /// </summary>
+        /// <param name="client">要发送的客户端目标</param>
+        /// <param name="data">要发送的二进制字节数组数据</param>
+        /// <param name="debugRemake">可附加的调试信息</param>
+        public void SendToClient(TcpClient client, byte[] data,string debugRemake = "")
+        {
+            if (client == null || !client.Connected) return;
+            try
+            {
+                NetworkStream stream;
+                lock (clients)
+                {
+                    if (!clients.TryGetValue(client, out stream)) return;
+                }
+                stream.Write(data, 0, data.Length);
+                debugRemake = string.IsNullOrEmpty(debugRemake) ? "" : $"[{debugRemake}]";
+                Debug.Log($"已向[{client.Client.RemoteEndPoint}]发送TCP消息 {debugRemake}");
             }
             catch (Exception ex)
             {
@@ -200,6 +230,36 @@ namespace DreemurrStudio.Network
                         try
                         {
                             stream.Write(data, 0, data.Length);
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.LogWarning("广播消息失败: " + ex.Message);
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 向所有客户端广播原始字节数据
+        /// </summary>
+        /// <param name="data">要发送的原始字节数据</param>
+        /// <param name="debugRemake">可附加的调试标记信息</param>
+        public void SendToAllClients(byte[] data,string debugRemake = "")
+        {
+            lock (clients)
+            {
+                foreach (var kvp in clients)
+                {
+                    TcpClient client = kvp.Key;
+                    NetworkStream stream = kvp.Value;
+                    if (client.Connected)
+                    {
+                        try
+                        {
+                            stream.Write(data, 0, data.Length);
+                            debugRemake = string.IsNullOrEmpty(debugRemake) ? "" : $"[{debugRemake}]";
+                            Debug.Log($"已向[{client.Client.RemoteEndPoint}]发送TCP消息 {debugRemake}");
                         }
                         catch (Exception ex)
                         {

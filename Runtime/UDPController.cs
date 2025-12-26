@@ -3,6 +3,7 @@ using System.Collections;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using UnityEditor.VersionControl;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -26,9 +27,9 @@ namespace DreemurrStudio.Network
         [Tooltip("收到消息时事件，参数为消息内容")]
         public UnityEvent<string> onReceiveMessage;
         /// <summary>
-        /// 收到消息时事件，参数为发送者的IPEndPoint和消息内容
+        /// 收到消息时事件，参数为发送者的IPEndPoint和完整数据内容
         /// </summary>
-        public event Action<IPEndPoint, string> onReceiveUDPMessage;
+        public event Action<IPEndPoint, byte[]> onReceiveUDPData;
 
         /// <summary>
         /// 进行网络连接
@@ -106,10 +107,14 @@ namespace DreemurrStudio.Network
                     {
                         // 接收数据
                         int receivedBytes = socket.ReceiveFrom(buffer, ref senderEndPoint);
-                        string receivedMessage = Encoding.UTF8.GetString(buffer, 0, receivedBytes);
-                        Debug.Log($"接收到来自[{senderEndPoint}]的消息: {receivedMessage}");
-                        onReceiveUDPMessage?.Invoke((IPEndPoint)senderEndPoint, receivedMessage);
-                        onReceiveMessage?.Invoke(receivedMessage);
+                        var iped = (IPEndPoint)senderEndPoint;
+                        onReceiveUDPData?.Invoke(iped, buffer[0..receivedBytes]);
+                        if(onReceiveMessage != null)
+                        {
+                            var receivedMessage = Encoding.UTF8.GetString(buffer, 0, receivedBytes);
+                            Debug.Log($"接收到来自[{iped}]的消息: {receivedMessage}");
+                            onReceiveMessage?.Invoke(receivedMessage);
+                        }                        
                     }
                     catch (Exception e) { Debug.LogWarning(e); };
                 }
@@ -172,7 +177,36 @@ namespace DreemurrStudio.Network
                 Debug.LogWarning($"{remoteEndPoint}不在线！UDP消息发送失败，请检查网络情况");
             }
         }
-            
+
+        /// <summary>
+        /// 发送16位数组格式的UDP数据，一般用来发送二进制数据
+        /// </summary>
+        /// <param name="targetIP">发送目标IP地址</param>
+        /// <param name="targetPort">发送目标端口号</param>
+        /// <param name="data">要发送的字节数据</param>
+        /// <param name="debugRemake">可附带的调试信息</param>
+        public void SendUDPMessage(string targetIP, int targetPort, byte[] data,string debugRemake = "")
+            => SendUDPMessage(new IPEndPoint(IPAddress.Parse(targetIP), targetPort), data,debugRemake);
+
+        /// <summary>
+        /// 发送16位数组格式的UDP数据，一般用来发送二进制数据
+        /// </summary>
+        /// <param name="remoteEndPoint">目标IP标的</param>
+        /// <param name="data">要发送的字节数据</param>
+        /// <param name="debugRemake">可附带的调试信息</param>
+        public void SendUDPMessage(IPEndPoint remoteEndPoint, byte[] data,string debugRemake = "")
+        {
+            debugRemake = string.IsNullOrEmpty(debugRemake) ? "" : $"[{debugRemake}]";
+            try
+            {
+                socket.SendTo(data, remoteEndPoint);
+                Debug.Log($" 已向[{remoteEndPoint}]发送UDP数据{debugRemake}");
+            }
+            catch
+            {
+                Debug.LogWarning($"UDP数据{debugRemake}发送失败，请检查网络情况");
+            }
+        }
 
         private void OnApplicationQuit()
         {
@@ -192,13 +226,8 @@ namespace DreemurrStudio.Network
         [ContextMenu("模拟接收")]
         public void SimulateReceive()
         {
-            onReceiveUDPMessage?.Invoke(new IPEndPoint(IPAddress.Parse(receiveIP), receivePort), receivedMessage);
+            onReceiveUDPData?.Invoke(new IPEndPoint(IPAddress.Parse(receiveIP), receivePort), Encoding.UTF8.GetBytes(receivedMessage));
             onReceiveMessage?.Invoke(receivedMessage);
-        }
-        public void SimulateReceive(IPEndPoint iped, string message)
-        {
-            onReceiveUDPMessage?.Invoke(iped, message);
-            onReceiveMessage?.Invoke(message);
         }
 
         [Header("模拟发送")]

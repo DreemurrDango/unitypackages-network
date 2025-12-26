@@ -27,6 +27,8 @@ namespace DreemurrStudio.Network
         private bool connectOnStart = true;
         [Tooltip("收到来自服务器的事件时的动作")]
         public Action<string> OnReceivedMessage;
+        [Tooltip("收到来自服务器的原始字节数据时的动作")]
+        public Action<byte[]> OnReceivedData;
 
         [Header("调试")]
         [SerializeField]
@@ -137,6 +139,7 @@ namespace DreemurrStudio.Network
                     {
                         int bytesRead = stream.Read(buffer, 0, buffer.Length);
                         if (bytesRead == 0) break; // 服务器断开
+                        OnReceivedData?.Invoke(buffer[0..bytesRead]);
                         string message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
                         Debug.Log("收到服务器消息: " + message);
                         OnReceivedMessage?.Invoke(message);
@@ -164,7 +167,22 @@ namespace DreemurrStudio.Network
             }
             catch (Exception ex)
             {
-                Debug.LogWarning("发送消息失败: " + ex.Message);
+                Debug.LogWarning("向服务器发送消息失败: " + ex.Message);
+            }
+        }
+
+        public void SendDataToServer(byte[] data,string debugRemark = "")
+        {
+            if (!IsConnected || stream == null) return;
+            debugRemark = string.IsNullOrEmpty(debugRemark) ? "" : $"[{debugRemark}]";
+            try
+            {
+                stream.Write(data, 0, data.Length);
+                Debug.Log($"已向服务器发送数据{debugRemark}");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("发送数据失败: " + ex.Message);
             }
         }
 

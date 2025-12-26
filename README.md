@@ -9,6 +9,7 @@
 ## 核心功能
 
 *   **双协议支持**: 同时提供 TCP 和 UDP 两种通信协议的实现，以适应不同场景的需求
+*   **二进制数据传输**: 支持直接发送和接收 `byte[]` 数组，方便传输序列化对象、文件或其他非文本数据。
 *   **TCP C/S 架构**:
     *   提供 `TCPServer` 和 `TCPClient` 组件，支持一对多的可靠连接
     *   服务器可管理多个客户端，并支持向所有客户端广播或向特定客户端发送消息
@@ -42,6 +43,7 @@
 // 发送消息
 using DreemurrStudio.Network;
 using UnityEngine;
+using System.Text;
 
 public class UDPSender : MonoBehaviour
 {
@@ -49,8 +51,12 @@ public class UDPSender : MonoBehaviour
 
     void Start()
     {
-        // 向指定IP和端口发送消息
+        // 发送字符串消息
         udpController.SendUDPMessage("192.168.1.101", 8080, "Hello from UDP");
+
+        // 发送二进制数据
+        byte[] binaryData = new byte[] { 0x01, 0x02, 0x03, 0x04 };
+        udpController.SendUDPMessage("192.168.1.101", 8080, binaryData, "MyBinaryData");
     }
 }
 ```
@@ -60,6 +66,7 @@ public class UDPSender : MonoBehaviour
 using DreemurrStudio.Network;
 using UnityEngine;
 using System.Net;
+using System.Text;
 
 public class UDPReceiver : MonoBehaviour
 {
@@ -67,13 +74,23 @@ public class UDPReceiver : MonoBehaviour
 
     void Start()
     {
-        // 方式一：通过 C# Action 订阅 (推荐)
-        udpController.onReceiveUDPMessage += HandleMessage;
+        // 方式一：通过 C# Action 订阅二进制数据 (推荐)
+        udpController.onReceiveUDPData += HandleBinaryData;
+        
+        // 方式二：通过 UnityEvent 订阅字符串消息
+        udpController.onReceiveMessage.AddListener(HandleStringMessage);
     }
 
-    private void HandleMessage(IPEndPoint sender, string message)
+    private void HandleBinaryData(IPEndPoint sender, byte[] data)
     {
-        Debug.Log($"收到来自 {sender} 的消息: {message}");
+        Debug.Log($"收到来自 {sender} 的二进制数据，长度: {data.Length}");
+        // 如果确定是字符串，可以解码
+        // string message = Encoding.UTF8.GetString(data);
+    }
+
+    private void HandleStringMessage(string message)
+    {
+        Debug.Log($"收到字符串消息: {message}");
     }
 
     void OnDestroy()
@@ -81,7 +98,7 @@ public class UDPReceiver : MonoBehaviour
         // 务必在销毁时取消订阅
         if (udpController != null)
         {
-            udpController.onReceiveUDPMessage -= HandleMessage;
+            udpController.onReceiveUDPData -= HandleBinaryData;
         }
     }
 }
@@ -98,15 +115,18 @@ public class UDPReceiver : MonoBehaviour
 // 服务器逻辑
 using DreemurrStudio.Network;
 using UnityEngine;
+using System.Net;
+using System.Text;
 
 public class MyGameServer : MonoBehaviour
 {
     void Start()
     {
-        // 监听来自任意客户端的消息
-        TCPServer.Instance.OnReceivedMessage += (message) =>
+        // 监听来自任意客户端的二进制数据
+        TCPServer.Instance.OnReceivedData += (sender, data) =>
         {
-            Debug.Log("服务器收到消息: " + message);
+            Debug.Log($"服务器收到来自 {sender} 的数据，长度: {data.Length}");
+            string message = Encoding.UTF8.GetString(data);
 
             // 将收到的消息广播给所有客户端
             TCPServer.Instance.SendToAllClients("服务器已收到: " + message);
@@ -124,14 +144,16 @@ public class MyGameServer : MonoBehaviour
 // 客户端逻辑
 using DreemurrStudio.Network;
 using UnityEngine;
+using System.Text;
 
 public class MyGameClient : MonoBehaviour
 {
     void Start()
     {
-        // 监听来自服务器的消息
-        TCPClient.Instance.OnReceivedMessage += (message) =>
+        // 监听来自服务器的数据
+        TCPClient.Instance.OnReceivedData += (data) =>
         {
+            string message = Encoding.UTF8.GetString(data);
             Debug.Log("客户端收到服务器消息: " + message);
         };
     }
@@ -141,7 +163,12 @@ public class MyGameClient : MonoBehaviour
     {
         if (TCPClient.Instance.IsConnected)
         {
+            // 发送字符串
             TCPClient.Instance.SendMessageToServer("请求登录");
+            
+            // 发送二进制数据
+            byte[] binaryData = new byte[] { 0xDE, 0xAD, 0xBE, 0xEF };
+            TCPClient.Instance.SendDataToServer(binaryData, "LoginData");
         }
     }
 }
@@ -149,35 +176,29 @@ public class MyGameClient : MonoBehaviour
 
 ### 3. 结构化消息
 
-为了发送复杂数据，你可以创建继承自 `MessageDataBase` 的类，并使用 `JsonUtility` 进行序列化和反序列化
->对于更复杂的消息结构，可以考虑使用更强大的序列化库，推荐组合使用 Newtonsoft.Json + DreemurrStudio.Utilities 包
+为了发送复杂数据，你可以创建自定义的数据结构类，并使用序列化工具（如 `JsonUtility` 或 `Newtonsoft.Json`）将其转换为 `byte[]` 进行传输。
+
+> **注意**: `MessageDataCollection.cs` 文件已作为可选附加包提供。你可以在导入本网络包后，在 `Packages/Network Module/Extras` 目录下找到 `MessageDataCollection.unitypackage` 并手动导入，以获得C/S架构的消息基类模板。
 
 ```csharp
 // 1. 定义消息结构 (在 MessageDataCollection.cs 或其他地方)
 [System.Serializable]
-public class PlayerPosMessage : MessageDataBase
+public class PlayerPosMessage
 {
     public float x, y, z;
-    public PlayerPosMessage()
-    {
-        messageType = MessageType.PlaceBuilding; // 举例
-    }
 }
 
 // 2. 发送方：序列化并发送
 var posMessage = new PlayerPosMessage { x = 1.0f, y = 2.5f, z = 0f };
 string json = JsonUtility.ToJson(posMessage);
-TCPClient.Instance.SendMessageToServer(json);
+byte[] data = Encoding.UTF8.GetBytes(json);
+TCPClient.Instance.SendDataToServer(data, "PlayerPosition");
 
 // 3. 接收方：反序列化并处理
-TCPServer.Instance.OnReceivedMessage += (json) =>
+TCPServer.Instance.OnReceivedData += (sender, data) =>
 {
-    // 首先判断消息类型
-    var baseMsg = JsonUtility.FromJson<MessageDataBase>(json);
-    if (baseMsg.messageType == MessageType.PlaceBuilding)
-    {
-        var posMessage = JsonUtility.FromJson<PlayerPosMessage>(json);
-        Debug.Log($"收到玩家位置: ({posMessage.x}, {posMessage.y})");
-    }
+    string json = Encoding.UTF8.GetString(data);
+    var posMessage = JsonUtility.FromJson<PlayerPosMessage>(json);
+    Debug.Log($"收到来自 {sender} 的玩家位置: ({posMessage.x}, {posMessage.y})");
 };
 ```
