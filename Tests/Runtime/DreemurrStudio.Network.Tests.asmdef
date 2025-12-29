@@ -1,0 +1,17 @@
+{
+    "name": "DreemurrStudio.Network.Tests",
+    "rootNamespace": "DreemurrStudio.Network.DEMO",
+    "references": [
+        "GUID:ab4132ecbac35fc47b9678258210850d",
+        "GUID:7fce0c1115269a0448efb3c01fa74bdb"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

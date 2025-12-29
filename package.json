@@ -1,6 +1,6 @@
 ﻿{
   "name": "com.dreemurrstudio.network",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "displayName": "网络通信",
   "description": "为 Unity 项目提供了一套包含 TCP 和 UDP 的基础网络通信解决方案，旨在帮助开发者快速搭建客户端与服务器的通信原型，或实现局域网内的设备间通信。",
   "author": {
@@ -11,7 +11,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/DreemurrDango/unitypackages-network.git",
-    "revision": "v2.1.0"
+    "revision": "v2.2.0"
   },
   "keywords": [
     "TCP",

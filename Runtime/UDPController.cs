@@ -172,9 +172,9 @@ namespace DreemurrStudio.Network
                 socket.SendTo(sendData, remoteEndPoint);
                 Debug.Log($" 已向[{remoteEndPoint}]发送UDP消息：{message}");
             }
-            catch 
+            catch (Exception e)
             {
-                Debug.LogWarning($"{remoteEndPoint}不在线！UDP消息发送失败，请检查网络情况");
+                Debug.LogWarning($"UDP消息{message}发送失败，请检查网络情况\n异常信息：{e}");
             }
         }
 
@@ -202,9 +202,9 @@ namespace DreemurrStudio.Network
                 socket.SendTo(data, remoteEndPoint);
                 Debug.Log($" 已向[{remoteEndPoint}]发送UDP数据{debugRemake}");
             }
-            catch
+            catch (Exception e)
             {
-                Debug.LogWarning($"UDP数据{debugRemake}发送失败，请检查网络情况");
+                Debug.LogWarning($"UDP数据{debugRemake}发送失败，请检查网络情况\n异常信息：{e}");
             }
         }
 

@@ -9,17 +9,17 @@
 ## 核心功能
 
 *   **双协议支持**: 同时提供 TCP 和 UDP 两种通信协议的实现，以适应不同场景的需求
-*   **二进制数据传输**: 支持直接发送和接收 `byte[]` 数组，方便传输序列化对象、文件或其他非文本数据。
+*   **TCP 粘包处理**: TCP 通信内置了基于“长度前缀”的协议，能自动处理粘包和断包问题，确保消息的完整性
+*   **主线程调度器**: 提供 `UnityMainThreadDispatcher`，可以安全地将网络线程中接收到的任务（如更新UI）调度到 Unity 主线程执行
+*   **二进制数据传输**: 支持直接发送和接收 `byte[]` 数组，方便传输序列化对象、文件或其他非文本数据
 *   **TCP C/S 架构**:
     *   提供 `TCPServer` 和 `TCPClient` 组件，支持一对多的可靠连接
     *   服务器可管理多个客户端，并支持向所有客户端广播或向特定客户端发送消息
     *   客户端与服务器均采用多线程处理网络消息，避免阻塞 Unity 主线程
 *   **UDP 通信**:
     *   提供 `UDPController` 组件，用于无连接的、基于数据报的消息收发
-    *   支持向局域网内任意 IP 端点发送消息
 *   **事件驱动**: 通过 C# Action 和 UnityEvent 提供消息接收事件，方便将网络逻辑与业务逻辑解耦
 *   **全局单例访问**: `TCPClient` 和 `TCPServer` 采用单例模式，方便在任何脚本中快速获取实例
-*   **编辑器内调试**: 所有组件均提供模拟发送和接收数据的功能，方便在没有网络环境或对端的情况下进行开发和调试
 
 ## 组件说明
 
@@ -164,41 +164,56 @@ public class MyGameClient : MonoBehaviour
         if (TCPClient.Instance.IsConnected)
         {
             // 发送字符串
-            TCPClient.Instance.SendMessageToServer("请求登录");
+            TCPClient.Instance.SendToServer("请求登录");
             
             // 发送二进制数据
             byte[] binaryData = new byte[] { 0xDE, 0xAD, 0xBE, 0xEF };
-            TCPClient.Instance.SendDataToServer(binaryData, "LoginData");
+            TCPClient.Instance.SendToServer(binaryData, "LoginData");
         }
     }
 }
 ```
 
-### 3. 结构化消息
+### 3. 在网络回调中与 Unity 主线程交互
 
-为了发送复杂数据，你可以创建自定义的数据结构类，并使用序列化工具（如 `JsonUtility` 或 `Newtonsoft.Json`）将其转换为 `byte[]` 进行传输。
-
-> **注意**: `MessageDataCollection.cs` 文件已作为可选附加包提供。你可以在导入本网络包后，在 `Packages/Network Module/Extras` 目录下找到 `MessageDataCollection.unitypackage` 并手动导入，以获得C/S架构的消息基类模板。
+网络事件（如 `OnReceivedData`）是在后台线程中触发的。如果你想在收到消息后更新 UI 或操作场景中的物体，必须将这些任务交由 `UnityMainThreadDispatcher` 来执行。
 
 ```csharp
-// 1. 定义消息结构 (在 MessageDataCollection.cs 或其他地方)
-[System.Serializable]
-public class PlayerPosMessage
+using DreemurrStudio.Network;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class TextureReceiver : MonoBehaviour
 {
-    public float x, y, z;
+    public RawImage receivedImageDisplay;
+
+    void Start()
+    {
+        TCPClient.Instance.OnReceivedData += OnImageDataReceived;
+    }
+
+    private void OnImageDataReceived(byte[] imageData)
+    {
+        // OnReceivedData 在后台线程被调用
+        // 不能在这里直接操作 Unity UI
+        
+        // 使用调度器将 UI 更新任务排队到主线程
+        UnityMainThreadDispatcher.Instance().Enqueue(() =>
+        {
+            // 这部分代码将在下一帧的主线程中执行
+            var tex = new Texture2D(2, 2);
+            if (tex.LoadImage(imageData))
+            {
+                receivedImageDisplay.texture = tex;
+                Debug.Log("图片加载成功！");
+            }
+        });
+    }
+
+    void OnDestroy()
+    {
+        if(TCPClient.Instance != null)
+            TCPClient.Instance.OnReceivedData -= OnImageDataReceived;
+    }
 }
-
-// 2. 发送方：序列化并发送
-var posMessage = new PlayerPosMessage { x = 1.0f, y = 2.5f, z = 0f };
-string json = JsonUtility.ToJson(posMessage);
-byte[] data = Encoding.UTF8.GetBytes(json);
-TCPClient.Instance.SendDataToServer(data, "PlayerPosition");
-
-// 3. 接收方：反序列化并处理
-TCPServer.Instance.OnReceivedData += (sender, data) =>
-{
-    string json = Encoding.UTF8.GetString(data);
-    var posMessage = JsonUtility.FromJson<PlayerPosMessage>(json);
-    Debug.Log($"收到来自 {sender} 的玩家位置: ({posMessage.x}, {posMessage.y})");
-};
 ```
