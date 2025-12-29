@@ -6,7 +6,6 @@
 ## [2.2.0] - 2025-12-29
 ### 新增
 - **TCP 粘包/断包处理**: 为 `TCPClient` 和 `TCPServer` 添加了基于长度前缀的协议。现在发送的每条消息都会自动附加一个4字节的包头来表示消息长度，以从根本上解决 TCP 传输中可能出现的粘包和断包问题，确保消息的完整性
-- **主线程调度器 (`UnityMainThreadDispatcher`)**: 新增了一个线程安全的 `UnityMainThreadDispatcher` 单例类。它允许您从任何后台线程（如网络接收线程）中安全地将任务（如更新UI、操作GameObject）调度到 Unity 的主线程上执行
 - **二进制数据事件**: `TCPClient` 和 `TCPServer` 现在新增了 `OnReceivedData` 事件，专门用于处理原始的 `byte[]` 数据，这对于传输图片、文件等非文本数据至关重要
 - **示例场景**: 添加了 `TextureTransmitTest` 示例，演示了如何利用新功能在客户端和服务器之间传输和显示图片
 
