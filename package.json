@@ -20,5 +20,8 @@
     "Message",
     "Network",
     "Socket"
-  ]
+  ],
+  "dependencies": {
+    "com.dreemurrstudio.utilities": "1.0.0"
+  }
 }
