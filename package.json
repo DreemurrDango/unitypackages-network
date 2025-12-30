@@ -21,6 +21,6 @@
     "Socket"
   ],
   "dependencies": {
-    "com.dreemurrstudio.utilities": "https://github.com/DreemurrDango/unitypackages-utilities.git#v3.4.1"
+    "com.dreemurrstudio.utilities": "https://github.com/DreemurrDango/unitypackages-utilities.git"
   }
 }
