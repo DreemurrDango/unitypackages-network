@@ -3,6 +3,13 @@
 > 此文件记录了该软件包所有重要的变更
 > 文件格式基于 [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) 更新日志规范，且此项目版本号遵循 [语义化版本](http://semver.org/spec/v2.0.0.html) 规范
 
+## [2.3.0] - 2025-12-31
+### 新增
+- **TCP连接事件监听**：`TCPServer` 添加了 `OnClientConnected` 和 `OnClientDisconnected` 事件，允许用户在客户端连接或断开时监听并执行自定义逻辑；`TCPClient` 添加了 `OnConnected` 和 `OnDisconnected` 事件，用于监听客户端自身的连接状态变化`
+
+### 变更
+- **示例场景**：将原本的图片传输场景分为 `TextureTransmitServerTest` 和`TextureTransmitClientTest`示例，以便进行多机测试和演示
+
 ## [2.2.0] - 2025-12-29
 ### 新增
 - **TCP 粘包/断包处理**: 为 `TCPClient` 和 `TCPServer` 添加了基于长度前缀的协议。现在发送的每条消息都会自动附加一个4字节的包头来表示消息长度，以从根本上解决 TCP 传输中可能出现的粘包和断包问题，确保消息的完整性

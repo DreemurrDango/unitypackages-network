@@ -30,10 +30,14 @@ namespace DreemurrStudio.Network
         [Tooltip("是否在开始时自动启动TCP服务器")]
         private bool startOnStart = true;
 
+        [Tooltip("客户端连接时事件，参数为客户端IPEndPoint")]
+        public event Action<IPEndPoint> OnClientConnected;
         [Tooltip("收到消息时事件，参数为消息内容")]
-        public Action<string> OnReceivedMessage;
+        public event Action<string> OnReceivedMessage;
         [Tooltip("收到数据时事件，参数为发送端IPEndPoint和数据内容")]
-        public Action<IPEndPoint, byte[]> OnReceivedData;
+        public event Action<IPEndPoint, byte[]> OnReceivedData;
+        [Tooltip("客户端断开连接时事件，参数为客户端IPEndPoint")]
+        public event Action<IPEndPoint> OnClientDisconnected;
 
         /// <summary>
         /// 是否正在运行TCP服务器
@@ -137,10 +141,12 @@ namespace DreemurrStudio.Network
                         {
                             clients.Add(client, stream);
                         }
-                        Debug.Log("客户端已连接: " + client.Client.RemoteEndPoint);
+                        var clientIPEP = (IPEndPoint)client.Client.RemoteEndPoint;
+                        Debug.Log("客户端已连接: " + clientIPEP);
                         var clientThread = new Thread(() => HandleClientComm(client, stream));
                         clientThread.IsBackground = true;
                         clientThread.Start();
+                        OnClientConnected?.Invoke(clientIPEP);
                     }
                     Thread.Sleep(10);
                 }
@@ -159,7 +165,8 @@ namespace DreemurrStudio.Network
         private void HandleClientComm(TcpClient client, NetworkStream stream)
         {
             // 用于存储消息长度的包头
-            var lengthBuffer = new byte[MESSAGEHEADLENGTH]; 
+            var lengthBuffer = new byte[MESSAGEHEADLENGTH];
+            var clientIPEP = (IPEndPoint)client.Client.RemoteEndPoint;
             try
             {
                 while (isRunning && client.Connected)
@@ -183,7 +190,7 @@ namespace DreemurrStudio.Network
                         if (totalBytesRead < messageLength) break; // 数据不完整
 
                         // 3. 触发事件
-                        OnReceivedData?.Invoke((IPEndPoint)client.Client.RemoteEndPoint, messageBuffer);
+                        OnReceivedData?.Invoke(clientIPEP, messageBuffer);
                         if (OnReceivedMessage != null)
                         {
                             string message = Encoding.UTF8.GetString(messageBuffer);
@@ -201,13 +208,13 @@ namespace DreemurrStudio.Network
             finally
             {
                 // 在关闭客户端之前获取其终结点信息
-                var remoteEndPoint = client.Connected ? client.Client.RemoteEndPoint.ToString() : "N/A";
+                OnClientDisconnected?.Invoke(clientIPEP);
                 lock (clients)
                 {
                     clients.Remove(client);
                 }
                 client.Close();
-                Debug.Log("客户端已断开: " + remoteEndPoint);
+                Debug.Log($"客户端已断开: {clientIPEP}");
             }
         }
 

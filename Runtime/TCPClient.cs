@@ -32,10 +32,15 @@ namespace DreemurrStudio.Network
         [SerializeField]
         [Tooltip("是否在Start时自动连接服务器")]
         private bool connectOnStart = true;
+
+        [Tooltip("连接到服务器时的动作，参数依次为客户端IP端点和服务器IP端点")]
+        public event Action<IPEndPoint,IPEndPoint> OnConnectedToServer;
         [Tooltip("收到来自服务器的事件时的动作")]
-        public Action<string> OnReceivedMessage;
+        public event Action<string> OnReceivedMessage;
         [Tooltip("收到来自服务器的原始字节数据时的动作")]
-        public Action<byte[]> OnReceivedData;
+        public event Action<byte[]> OnReceivedData;
+        [Tooltip("与服务器断开连接时的动作，参数依次为客户端IP端点和服务器IP端点")]
+        public event Action<IPEndPoint,IPEndPoint> OnDisconnectedFromServer;
 
         [Header("调试")]
         [SerializeField]
@@ -107,6 +112,7 @@ namespace DreemurrStudio.Network
                 receiveThread = new Thread(ListenningMessage);
                 receiveThread.IsBackground = true;
                 receiveThread.Start();
+                OnConnectedToServer?.Invoke(cip, sep);
                 Debug.Log("已连接到服务器: " + serverIP + ":" + serverPort);
                 return true;
             }
@@ -150,6 +156,7 @@ namespace DreemurrStudio.Network
                 stream?.Close();
                 client?.Close();
                 receiveThread?.Join();
+                OnDisconnectedFromServer?.Invoke(ClientIPEP, ServerIPEP);
             }
             catch (Exception e)
             {

@@ -10,14 +10,18 @@
 
 *   **双协议支持**: 同时提供 TCP 和 UDP 两种通信协议的实现，以适应不同场景的需求
 *   **TCP 粘包处理**: TCP 通信内置了基于“长度前缀”的协议，能自动处理粘包和断包问题，确保消息的完整性
+*   **主线程调度器**: 提供 `UnityMainThreadDispatcher`，可以安全地将网络线程中接收到的任务（如更新UI）调度到 Unity 主线程执行
 *   **二进制数据传输**: 支持直接发送和接收 `byte[]` 数组，方便传输序列化对象、文件或其他非文本数据
+*   **生命周期事件**:
+    *   `TCPClient` 提供 `OnConnectedToServer` 和 `OnDisconnectedFromServer` 事件
+    *   `TCPServer` 提供 `OnClientConnected` 和 `OnClientDisconnected` 事件
+    *   所有组件都提供 `OnReceivedData` 或 `OnReceivedMessage` 事件
 *   **TCP C/S 架构**:
     *   提供 `TCPServer` 和 `TCPClient` 组件，支持一对多的可靠连接
     *   服务器可管理多个客户端，并支持向所有客户端广播或向特定客户端发送消息
     *   客户端与服务器均采用多线程处理网络消息，避免阻塞 Unity 主线程
 *   **UDP 通信**:
     *   提供 `UDPController` 组件，用于无连接的、基于数据报的消息收发
-*   **事件驱动**: 通过 C# Action 和 UnityEvent 提供消息接收事件，方便将网络逻辑与业务逻辑解耦
 *   **全局单例访问**: `TCPClient` 和 `TCPServer` 采用单例模式，方便在任何脚本中快速获取实例
 
 ## 组件说明
@@ -121,6 +125,18 @@ public class MyGameServer : MonoBehaviour
 {
     void Start()
     {
+        // 监听客户端连接事件
+        TCPServer.Instance.OnClientConnected += (clientIP) =>
+        {
+            Debug.Log($"客户端 {clientIP} 已连接");
+        };
+
+        // 监听客户端断开事件
+        TCPServer.Instance.OnClientDisconnected += (clientIP) =>
+        {
+            Debug.Log($"客户端 {clientIP} 已断开");
+        };
+
         // 监听来自任意客户端的二进制数据
         TCPServer.Instance.OnReceivedData += (sender, data) =>
         {
@@ -144,11 +160,24 @@ public class MyGameServer : MonoBehaviour
 using DreemurrStudio.Network;
 using UnityEngine;
 using System.Text;
+using System.Net;
 
 public class MyGameClient : MonoBehaviour
 {
     void Start()
     {
+        // 监听连接成功事件
+        TCPClient.Instance.OnConnectedToServer += (clientIP, serverIP) =>
+        {
+            Debug.Log($"成功连接到服务器 {serverIP}，本地端点为 {clientIP}");
+        };
+
+        // 监听与服务器断开事件
+        TCPClient.Instance.OnDisconnectedFromServer += (clientIP, serverIP) =>
+        {
+            Debug.Log($"与服务器 {serverIP} 的连接已断开");
+        };
+
         // 监听来自服务器的数据
         TCPClient.Instance.OnReceivedData += (data) =>
         {
