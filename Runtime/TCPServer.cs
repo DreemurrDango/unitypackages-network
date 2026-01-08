@@ -33,7 +33,7 @@ namespace DreemurrStudio.Network
         [Tooltip("客户端连接时事件，参数为客户端IPEndPoint")]
         public event Action<IPEndPoint> OnClientConnected;
         [Tooltip("收到消息时事件，参数为消息内容")]
-        public event Action<string> OnReceivedMessage;
+        public event Action<IPEndPoint,string> OnReceivedMessage;
         [Tooltip("收到数据时事件，参数为发送端IPEndPoint和数据内容")]
         public event Action<IPEndPoint, byte[]> OnReceivedData;
         [Tooltip("客户端断开连接时事件，参数为客户端IPEndPoint")]
@@ -194,8 +194,8 @@ namespace DreemurrStudio.Network
                         if (OnReceivedMessage != null)
                         {
                             string message = Encoding.UTF8.GetString(messageBuffer);
-                            Debug.Log("收到客户端消息: " + message);
-                            OnReceivedMessage?.Invoke(message);
+                            Debug.Log($"收到客户端{clientIPEP}的消息: {message}");
+                            OnReceivedMessage?.Invoke(clientIPEP, message);
                         }
                     }
                     Thread.Sleep(10);
@@ -321,7 +321,7 @@ namespace DreemurrStudio.Network
         public string receivedMessage;
 
         [ContextMenu("模拟接收")]
-        public void SimulateReceive() => OnReceivedMessage?.Invoke(receivedMessage);
+        public void SimulateReceive() => OnReceivedMessage?.Invoke(new IPEndPoint(IPAddress.Parse(receiveIP), receivePort), receivedMessage);
 
         [Header("模拟发送")]
         [Tooltip("用于测试的发送消息内容")]
