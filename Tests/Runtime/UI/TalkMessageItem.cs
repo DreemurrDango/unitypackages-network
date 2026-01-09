@@ -11,11 +11,14 @@ namespace DreemurrStudio.Network.DEMO
         private Text talkerNameText;
         [SerializeField]
         private Text messageText;
+        [SerializeField]
+        private Text timeText;
 
-        public void Init(string talkerName, string message)
+        public void Init(string talkerName, string message,string time)
         {
             talkerNameText.text = talkerName;
             messageText.text = message;
+            timeText.text = time;
         }
     }
 }

@@ -17,10 +17,31 @@ namespace DreemurrStudio.Network.DEMO
     {
         public string roomName;
         public string hosterName;
-        public IPEndPoint hostTCPEndPoint;
+
+        // 修改：不再直接存储 IPEndPoint
+        public string hostIP;
+        public int hostPort;
+
         public int playerNum;
         //public int maxPlayer;
+
+        [JsonIgnore] // 告诉Json.NET不要序列化这个字段
         public float t_lastUpdateTime; // 用于超时检测
+
+        /// <summary>
+        /// 获取或设置房主的TCP端点。
+        /// 这个属性作为辅助，不会被序列化。
+        /// </summary>
+        [JsonIgnore]
+        public IPEndPoint IPEP
+        {
+            get => new IPEndPoint(IPAddress.Parse(hostIP), hostPort);
+            set
+            {
+                hostIP = value.Address.ToString();
+                hostPort = value.Port;
+            }
+        }
 
         public string ToJson() => JsonConvert.SerializeObject(this);
         public static RoomInfo FromJson(string json) => JsonConvert.DeserializeObject<RoomInfo>(json);
@@ -103,6 +124,31 @@ namespace DreemurrStudio.Network.DEMO
         /// </summary>
         public LobbyState CurrentLobbyState => lobbyState;
         /// <summary>
+        /// 本地玩家信息
+        /// </summary>
+        public PlayerInfo LocalPlayerInfo => localPlayerInfo;
+        /// <summary>
+        /// 当前所在房间的信息
+        /// </summary>
+        public RoomInfo CurrentRoomInfo => currrentRoomInfo;
+        /// <summary>
+        /// 本地TCP客户端的IP端点
+        /// </summary>
+        public IPEndPoint LocalIPEP => lobbyState switch
+        { 
+            LobbyState.Hosting => tcpServer.ServerIPEP,
+            LobbyState.Joined => tcpClient.ClientIPEP,
+            _ => null
+        };
+        /// <summary>
+        /// 当前所在房间的房主TCP端点
+        /// </summary>
+        public IPEndPoint CurrentRoomIPEP => currrentRoomInfo.IPEP;
+        /// <summary>
+        /// 获取当前是否为房主
+        /// </summary>
+        public bool IsHoster => lobbyState == LobbyState.Hosting;
+        /// <summary>
         /// 获取只读的已发现的房间列表
         /// </summary>
         public IReadOnlyDictionary<IPEndPoint, RoomInfo> DiscoveredRooms => discoveredRooms;
@@ -112,21 +158,50 @@ namespace DreemurrStudio.Network.DEMO
         public IReadOnlyDictionary<IPEndPoint, PlayerInfo> RoomPlayers => roomPlayers;
 
         // 游客事件
+        /// <summary>
+        /// 大厅中有房间更新时的回调
+        /// </summary>
         public event Action<RoomInfo> onLobbyRoomUpdated;
+        /// <summary>
+        /// 大厅中有房间移除时的回调
+        /// </summary>
         public event Action<RoomInfo> onLobbyRoomRemoved;
+        /// <summary>
+        /// 作为游客所在房间有信息更新时的回调
+        /// </summary>
         public event Action<RoomInfo, Dictionary<IPEndPoint,PlayerInfo>> onRoomUpdated;
+        /// <summary>
+        /// 作为游客离开房间时的回调
+        /// </summary>
         public event Action onLeftRoom;
+
         // 房主事件
+        /// <summary>
+        /// 房主成功主持房间时的回调
+        /// </summary>
         public event Action<RoomInfo> onRoomHosted;
+        /// <summary>
+        /// 作为房主主持房间时，有玩家信息更新的回调
+        /// </summary>
         public event Action<IPEndPoint,PlayerInfo> onPlayerInfoUpdated;
+        /// <summary>
+        /// 作为房主主持房间时，有玩家离开的回调
+        /// </summary>
         public event Action<IPEndPoint, PlayerInfo> onPlayerLeft;
+        /// <summary>
+        /// 作为房主关闭房间时的回调
+        /// </summary>
         public event Action onRoomClosed;
+
         // 房间内事件
+        /// <summary>
+        /// 房间内有玩家发言时的回调
+        /// </summary>
         public event Action<PlayerInfo, string> onPlayerSpeak;
 
         private void Start()
         {
-            udpBroadcaster.Open(IPAddress.Any.ToString(), broadcastPort, false);
+            udpBroadcaster.Open(IPAddress.Any.ToString(), broadcastPort, false,true);
             tcpClient.OnConnectedToServer += OnTCPClientConnectedToServer;
             tcpClient.OnDisconnectedFromServer += OnTCPClientDisconnectedFromServer;
         }
@@ -153,8 +228,12 @@ namespace DreemurrStudio.Network.DEMO
 
         public void Speak(string words)
         {
-            if (lobbyState != LobbyState.Joined) return;
-            SendTCPMessage_PlayerSpeak(words);
+            if (lobbyState == LobbyState.Joined) SendTCPMessage_PlayerSpeak(words);
+            else if (lobbyState == LobbyState.Hosting)
+            {
+                SendTCPMessage_PlayerSpeak(LocalIPEP, words);
+                onPlayerSpeak?.Invoke(localPlayerInfo, words);
+            }
         }
 
         public void LeaveRoom()
@@ -231,8 +310,8 @@ namespace DreemurrStudio.Network.DEMO
                 var roomInfo = RoomInfo.FromJson(message);
                 roomInfo.t_lastUpdateTime = Time.time;
                 // 使用发送者的IP和房间指定的TCP端口来更新或添加房间信息
-                discoveredRooms[roomInfo.hostTCPEndPoint] = roomInfo;
-                Debug.Log($"发现或更新房间: {roomInfo.roomName}({roomInfo.hostTCPEndPoint})");
+                discoveredRooms[roomInfo.IPEP] = roomInfo;
+                Debug.Log($"发现或更新房间: {roomInfo.roomName}({roomInfo.IPEP})");
                 onLobbyRoomUpdated?.Invoke(roomInfo);
             }
             catch (System.Exception e)
@@ -302,8 +381,8 @@ namespace DreemurrStudio.Network.DEMO
         /// <param name="serverIPEP">断开的服务器IP端点</param>
         private void OnTCPClientDisconnectedFromServer(IPEndPoint clientIPEP, IPEndPoint serverIPEP)
         {
-            lobbyState = LobbyState.InLobby;
-            DoEnterLobby();
+            lobbyState = LobbyState.NONE;
+            onLeftRoom?.Invoke();
         }
 
         /// <summary>
@@ -328,6 +407,12 @@ namespace DreemurrStudio.Network.DEMO
             DoHostRoom(roomInfo);
         }
 
+        public void CloseHostRoom()
+        {
+            if (lobbyState != LobbyState.Hosting) return;
+            DoCloseHost();
+        }
+
         /// <summary>
         /// 主持一个新房间
         /// </summary>
@@ -336,11 +421,12 @@ namespace DreemurrStudio.Network.DEMO
         {
             if (lobbyState == LobbyState.Hosting) return;
             // 1. 启动TCP服务器，端口号设为0时，系统会自动分配一个可用端口
-            tcpServer.StartServer(IPAddress.Any.ToString(), 0);
+            tcpServer.StartServer(roomInfo.IPEP);
             tcpServer.OnReceivedMessage += OnServerReceiveRoomMessage;
             roomPlayers = new Dictionary<IPEndPoint, PlayerInfo>();
             Debug.Log($"房间 '{roomInfo.roomName}' 已创建，TCP服务运行于: {tcpServer.ServerIPEP}");
             currrentRoomInfo = roomInfo;
+            currrentRoomInfo.IPEP = tcpServer.ServerIPEP;
             lobbyState = LobbyState.Hosting;
             onRoomHosted?.Invoke(roomInfo);
             // 开始广播房间信息协程

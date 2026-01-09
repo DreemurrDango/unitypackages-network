@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Net;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -16,10 +17,10 @@ namespace DreemurrStudio.Network.DEMO
         [SerializeField]
         private GameObject localFlagGO;
 
-        public void Init(string playerName, string playerIPEP, bool isHost, bool isLocal)
+        public void Init(string playerName, IPEndPoint playerIPEP, bool isHost, bool isLocal)
         {
             playerNameText.text = playerName;
-            playerIPEPText.text = playerIPEP;
+            playerIPEPText.text = playerIPEP.ToString();
             hostFlagGO.SetActive(isHost);
             localFlagGO.SetActive(isLocal);
         }

@@ -28,17 +28,17 @@ namespace DreemurrStudio.Network.DEMO
             get => info;
             set
             {
-                roomNameText.text = info.roomName;
-                hosterNameText.text = $"房主:{info.hosterName}";
-                ipepText.text = $"IP:{info.hostTCPEndPoint}";
-                playerNum.text = $"{info.playerNum}名玩家";
+                roomNameText.text = value.roomName;
+                hosterNameText.text = $"房主:{value.hosterName}";
+                ipepText.text = $"IP:{value.IPEP}";
+                playerNum.text = $"{value.playerNum}名玩家";
                 info = value;
             }
         }
 
         private void Awake()
         {
-            if(joinButtom != null)joinButtom.onClick.AddListener(() => OnJoinRoomButtonDown?.Invoke(info.hostTCPEndPoint));
+            if(joinButtom != null)joinButtom.onClick.AddListener(() => OnJoinRoomButtonDown?.Invoke(info.IPEP));
         }
     }
 }

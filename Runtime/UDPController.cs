@@ -84,7 +84,7 @@ namespace DreemurrStudio.Network
 
         private void Start()
         {
-            if (openOnAwake) Open(localIP, localPort, true);
+            if (openOnAwake) Open(localIP, localPort);
         }
 
         /// <summary>
@@ -126,12 +126,14 @@ namespace DreemurrStudio.Network
         /// <param name="localIP">用于接收的本地IP</param>
         /// <param name="localPort">用于接收的端口号</param>
         /// <param name="inReceiving">是否开始接收</param>
-        public void Open(string localIP, int localPort = 8080,bool inReceiving = true)
+        public void Open(string localIP, int localPort = 8080,bool inReceiving = true,bool enableBroadcast = false)
         {
             this.localIP = localIP;
             this.localPort = localPort;
             // 创建UDP套接字
             socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            socket.EnableBroadcast = enableBroadcast;
+
             // 设置本地端点
             localEndPoint = new IPEndPoint(IPAddress.Parse(localIP), localPort);
             socket.Bind(localEndPoint);

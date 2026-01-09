@@ -73,7 +73,7 @@ namespace DreemurrStudio.Network
 
         private void OnApplicationQuit()
         {
-            StopServer();
+            if(isRunning) StopServer();
         }
 
         /// <summary>
