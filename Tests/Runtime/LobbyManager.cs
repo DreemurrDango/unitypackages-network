@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -201,18 +201,17 @@ namespace DreemurrStudio.Network.DEMO
 
         private void Start()
         {
-            udpBroadcaster.Open(IPAddress.Any.ToString(), broadcastPort, true,true);
             tcpClient.OnConnectedToServer += OnTCPClientConnectedToServer;
             tcpClient.OnDisconnectedFromServer += OnTCPClientDisconnectedFromServer;
         }
 
 
         #region 作为游客
-        public void EnterLobby(PlayerInfo playerInfo)
+        public void EnterLobby(PlayerInfo playerInfo,string ipAddress)
         {
             if (lobbyState == LobbyState.InLobby) return;
             localPlayerInfo = playerInfo;
-            DoEnterLobby();
+            DoEnterLobby(ipAddress);
         }
 
         public void ExitLobby()
@@ -245,13 +244,13 @@ namespace DreemurrStudio.Network.DEMO
         /// <summary>
         /// 游客进入大厅
         /// </summary>
-        private void DoEnterLobby()
+        private void DoEnterLobby(string ipAddress)
         {
             discoveredRooms = new Dictionary<IPEndPoint, RoomInfo>();
             StartCoroutine(CleanupTimeoutRoomsCoroutine());
             // 监听网络消息
+            udpBroadcaster.Open(ipAddress, broadcastPort, true, true);
             udpBroadcaster.onReceiveMessage.AddListener(OnReceiveBroadcast);
-            udpBroadcaster.InReceiving = true;
             lobbyState = LobbyState.InLobby;
         }
         #region 发送消息
@@ -421,6 +420,7 @@ namespace DreemurrStudio.Network.DEMO
         {
             if (lobbyState == LobbyState.Hosting) return;
             // 1. 启动TCP服务器，端口号设为0时，系统会自动分配一个可用端口
+            udpBroadcaster.Open(roomInfo.hostIP,broadcastPort, false, true);
             tcpServer.StartServer(roomInfo.IPEP);
             tcpServer.OnReceivedMessage += OnServerReceiveRoomMessage;
             roomPlayers = new Dictionary<IPEndPoint, PlayerInfo>();
