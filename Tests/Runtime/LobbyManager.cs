@@ -201,7 +201,7 @@ namespace DreemurrStudio.Network.DEMO
 
         private void Start()
         {
-            udpBroadcaster.Open(IPAddress.Any.ToString(), broadcastPort, false,true);
+            udpBroadcaster.Open(IPAddress.Any.ToString(), broadcastPort, true,true);
             tcpClient.OnConnectedToServer += OnTCPClientConnectedToServer;
             tcpClient.OnDisconnectedFromServer += OnTCPClientDisconnectedFromServer;
         }
@@ -248,10 +248,10 @@ namespace DreemurrStudio.Network.DEMO
         private void DoEnterLobby()
         {
             discoveredRooms = new Dictionary<IPEndPoint, RoomInfo>();
-            udpBroadcaster.InReceiving = true;
             StartCoroutine(CleanupTimeoutRoomsCoroutine());
             // 监听网络消息
             udpBroadcaster.onReceiveMessage.AddListener(OnReceiveBroadcast);
+            udpBroadcaster.InReceiving = true;
             lobbyState = LobbyState.InLobby;
         }
         #region 发送消息
@@ -391,9 +391,9 @@ namespace DreemurrStudio.Network.DEMO
         private void DoExitLobby()
         {
             if(lobbyState != LobbyState.InLobby) return;
-            udpBroadcaster.InReceiving = false;
             StopCoroutine(CleanupTimeoutRoomsCoroutine());
             // 取消监听
+            udpBroadcaster.InReceiving = false;
             udpBroadcaster.onReceiveMessage.RemoveListener(OnReceiveBroadcast);
             lobbyState = LobbyState.NONE;
         }

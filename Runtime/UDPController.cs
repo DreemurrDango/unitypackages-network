@@ -71,12 +71,12 @@ namespace DreemurrStudio.Network
                         return;
                     }
                     StartCoroutine(ReceiveDataCoroutine());
-                    Debug.Log("开始接收UDP数据");
+                    Debug.Log($"开始通过{localEndPoint}接收UDP数据");
                 }
                 else
                 {
                     StopAllCoroutines();
-                    Debug.Log("停止接收UDP数据");
+                    Debug.Log($"停止通过{localEndPoint}接收UDP数据");
                 }
                 _inReceiving = value;
             }
@@ -133,6 +133,10 @@ namespace DreemurrStudio.Network
             // 创建UDP套接字
             socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
             socket.EnableBroadcast = enableBroadcast;
+
+            // *** 新增：设置地址重用，这是接收广播的关键 ***
+            // 这个选项允许多个进程/套接字监听同一个端口，对于接收广播包至关重要。
+            socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
 
             // 设置本地端点
             localEndPoint = new IPEndPoint(IPAddress.Parse(localIP), localPort);

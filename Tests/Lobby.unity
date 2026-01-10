@@ -1842,7 +1842,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1671399607860495345, guid: 92cafb60e10ad804f9788d91baf8ce68, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -83
+      value: -81.3918
       objectReference: {fileID: 0}
     - target: {fileID: 1671399607860495345, guid: 92cafb60e10ad804f9788d91baf8ce68, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -3333,7 +3333,7 @@ MonoBehaviour:
   m_ContentType: 2
   m_InputType: 0
   m_AsteriskChar: 42
-  m_KeyboardType: 4
+  m_KeyboardType: 2
   m_LineType: 0
   m_HideMobileInput: 0
   m_CharacterValidation: 1
@@ -3960,8 +3960,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 66914823}
   m_HandleRect: {fileID: 66914822}
   m_Direction: 2
-  m_Value: 1
-  m_Size: 0.85714287
+  m_Value: 0.9999991
+  m_Size: 0.87387335
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -4793,7 +4793,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1671399607860495345, guid: 92cafb60e10ad804f9788d91baf8ce68, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -254
+      value: -249.17538
       objectReference: {fileID: 0}
     - target: {fileID: 1671399607860495345, guid: 92cafb60e10ad804f9788d91baf8ce68, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -5024,9 +5024,9 @@ MonoBehaviour:
   m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 1920, y: 1080}
+  m_ReferenceResolution: {x: 1200, y: 800}
   m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 0
+  m_MatchWidthOrHeight: 0.5
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
@@ -5493,7 +5493,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1671399607860495345, guid: 92cafb60e10ad804f9788d91baf8ce68, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -197
+      value: -193.24753
       objectReference: {fileID: 0}
     - target: {fileID: 1671399607860495345, guid: 92cafb60e10ad804f9788d91baf8ce68, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -7083,7 +7083,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1671399607860495345, guid: 92cafb60e10ad804f9788d91baf8ce68, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -140
+      value: -137.31966
       objectReference: {fileID: 0}
     - target: {fileID: 1671399607860495345, guid: 92cafb60e10ad804f9788d91baf8ce68, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -8333,6 +8333,8 @@ MonoBehaviour:
   talkMessageItemPrefab: {fileID: 5775268919713525807, guid: 92cafb60e10ad804f9788d91baf8ce68, type: 3}
   maxTalkMessageItemNum: 50
   talkInputField: {fileID: 1394884732}
+  testIPAdress: 192.168.200.100
+  testPort: 62200
 --- !u!4 &1879064204
 Transform:
   m_ObjectHideFlags: 0
@@ -9637,7 +9639,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 1111111111111111111111111111111111111111111111111111111
+  m_Text: 11111111111111111111111111111111111111111111111111111111111
 --- !u!222 &2050538582
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -9897,7 +9899,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1671399607860495345, guid: 92cafb60e10ad804f9788d91baf8ce68, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -26
+      value: -25.463932
       objectReference: {fileID: 0}
     - target: {fileID: 1671399607860495345, guid: 92cafb60e10ad804f9788d91baf8ce68, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

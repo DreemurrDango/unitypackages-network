@@ -92,6 +92,20 @@ namespace DreemurrStudio.Network.DEMO
         [SerializeField]
         [Tooltip("聊天输入框")]
         private InputField talkInputField;
+        [Header("调试")]
+        [SerializeField]
+        [Tooltip("用于测试的，进行强制连接的IP地址")]
+        private string testIPAdress;
+        [SerializeField]
+        [Tooltip("用于测试的，进行强制连接的端口号")]
+        private int testPort;
+
+        [ContextMenu("测试连接")]
+        public void TestForceJoinRoom()
+        {
+            var ipep = new IPEndPoint(IPAddress.Parse(testIPAdress), testPort);
+            LobbyManager.Instance.JoinRoom(ipep);
+        }
 
         /// <summary>
         /// 获取或设置UI输入框中的IP和端口号。
