@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -257,7 +257,7 @@ namespace DreemurrStudio.Network.DEMO
                 playerName = PlayerName,
             };
             // 请求LobbyManager进入大厅（开始监听房间广播）
-            LobbyManager.Instance.EnterLobby(playerInfo);
+            LobbyManager.Instance.EnterLobby(playerInfo,IPEP.Address.ToString());
             mainMenuPanelGO.SetActive(false);
             DoEnterLobby();
         }
