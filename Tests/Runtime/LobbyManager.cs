@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -249,7 +249,7 @@ namespace DreemurrStudio.Network.DEMO
             discoveredRooms = new Dictionary<IPEndPoint, RoomInfo>();
             StartCoroutine(CleanupTimeoutRoomsCoroutine());
             // 监听网络消息
-            udpBroadcaster.Open(ipAddress, broadcastPort, true, true);
+            udpBroadcaster.Open(broadcastPort, ipAddress, true, true);
             udpBroadcaster.onReceiveMessage.AddListener(OnReceiveBroadcast);
             lobbyState = LobbyState.InLobby;
         }
@@ -392,7 +392,7 @@ namespace DreemurrStudio.Network.DEMO
             if(lobbyState != LobbyState.InLobby) return;
             StopCoroutine(CleanupTimeoutRoomsCoroutine());
             // 取消监听
-            udpBroadcaster.InReceiving = false;
+            udpBroadcaster.Close();
             udpBroadcaster.onReceiveMessage.RemoveListener(OnReceiveBroadcast);
             lobbyState = LobbyState.NONE;
         }
@@ -420,7 +420,7 @@ namespace DreemurrStudio.Network.DEMO
         {
             if (lobbyState == LobbyState.Hosting) return;
             // 1. 启动TCP服务器，端口号设为0时，系统会自动分配一个可用端口
-            udpBroadcaster.Open(roomInfo.hostIP,broadcastPort, false, true);
+            udpBroadcaster.Open(broadcastPort,roomInfo.hostIP, false, true);
             tcpServer.StartServer(roomInfo.IPEP);
             tcpServer.OnReceivedMessage += OnServerReceiveRoomMessage;
             roomPlayers = new Dictionary<IPEndPoint, PlayerInfo>();
@@ -490,6 +490,7 @@ namespace DreemurrStudio.Network.DEMO
         {
             tcpServer.StopServer();
             tcpServer.OnReceivedMessage -= OnServerReceiveRoomMessage;
+            udpBroadcaster.Close();
             Debug.Log($"房间 '{currrentRoomInfo.roomName}' 已关闭");
             lobbyState = LobbyState.NONE;
             onRoomClosed?.Invoke();

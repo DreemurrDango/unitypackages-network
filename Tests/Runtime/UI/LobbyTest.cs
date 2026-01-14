@@ -1,4 +1,4 @@
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -200,9 +200,9 @@ namespace DreemurrStudio.Network.DEMO
         {
             ipAddressDropdown.ClearOptions();
             var ipAddresses = NetworkUtils.GetLocalIPv4Addresses(ipSubnetFilter);
-            ipAddressDropdown.AddOptions(new List<string> { "127.0.0.1" });
             if (ipAddresses.Count > 0)
                 ipAddressDropdown.AddOptions(ipAddresses);
+            ipAddressDropdown.AddOptions(new List<string> { "127.0.0.1" });
             ipAddressDropdown.RefreshShownValue();
         }
 
