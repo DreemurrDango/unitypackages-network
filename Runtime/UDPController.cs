@@ -20,6 +20,9 @@ namespace DreemurrStudio.Network
         [Tooltip("进行发送时使用的本地端口号")]
         private int localPort = 8080;
         [SerializeField]
+        [Tooltip("是否允许收发广播消息")]
+        private bool enableBroadcast = false;
+        [SerializeField]
         [Tooltip("是否在开始时使用预设属性值自动打开UDP端口")]
         private bool openOnAwake = true;
 
@@ -94,7 +97,7 @@ namespace DreemurrStudio.Network
 
         private void Start()
         {
-            if (openOnAwake) Open(localPort, localIP);
+            if (openOnAwake) Open(localPort, localIP, true, enableBroadcast);
         }
 
         /// <summary>
