@@ -349,6 +349,10 @@ PrefabInstance:
       propertyPath: serverPort
       value: 8888
       objectReference: {fileID: 0}
+    - target: {fileID: 3800374787901256372, guid: e078e80e4fb018b4bbb994f8984030c6, type: 3}
+      propertyPath: useLengthHead
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6910005352596619874, guid: e078e80e4fb018b4bbb994f8984030c6, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

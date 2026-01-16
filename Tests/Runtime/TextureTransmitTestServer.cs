@@ -28,7 +28,7 @@ namespace DreemurrStudio.Network.DEMO
 
         private void Start()
         {
-            server.OnReceivedData += OnDataReceived;
+            server.OnReceivedRawData += OnDataReceived;
             mainThreadDispatcher = UnityMainThreadDispatcher.Instance();
         }
 
@@ -69,7 +69,7 @@ namespace DreemurrStudio.Network.DEMO
             }
             showTextureImage.texture = sendTexture;
             byte[] textureData = sendTexture.EncodeToPNG();
-            server.SendToAllClients(textureData,sendTexture.name);
+            server.SendToAllClients(textureData,true, sendTexture.name);
         }
     }
 }

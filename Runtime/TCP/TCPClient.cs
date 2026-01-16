@@ -4,12 +4,12 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 using DreemurrStudio.Utilities;
 
 namespace DreemurrStudio.Network
 {
-    // TODO:添加ID标记
     /// <summary>
     /// 使用TCP协议的客户端通信脚本
     /// </summary>
@@ -20,6 +20,7 @@ namespace DreemurrStudio.Network
         /// </summary>
         private const int MESSAGEHEADLENGTH = 4;
 
+        [Header("客户端设置")]
         [SerializeField]
         [Tooltip("是否自动获取客户端IP端点")]
         private bool autoGetClientIPEP;
@@ -32,13 +33,16 @@ namespace DreemurrStudio.Network
         [SerializeField]
         [Tooltip("是否在Start时自动连接服务器")]
         private bool connectOnStart = true;
+        [SerializeField]
+        [Tooltip("是否在发送和接收数据时使用长度包头")]
+        private bool useLengthHead = false;
 
-        [Tooltip("连接到服务器时的动作，参数依次为客户端IP端点和服务器IP端点")]
+        [Tooltip("连接到服务器时的动作，参数为<客户端IP端点,服务器IP端点>")]
         public event Action<IPEndPoint,IPEndPoint> OnConnectedToServer;
+        [Tooltip("收到来自服务器的原始字节数据时的动作")]
+        public event Action<byte[]> OnReceivedRawData;
         [Tooltip("收到来自服务器的事件时的动作")]
         public event Action<string> OnReceivedMessage;
-        [Tooltip("收到来自服务器的原始字节数据时的动作")]
-        public event Action<byte[]> OnReceivedData;
         [Tooltip("与服务器断开连接时的动作，参数依次为客户端IP端点和服务器IP端点")]
         public event Action<IPEndPoint,IPEndPoint> OnDisconnectedFromServer;
 
@@ -49,6 +53,9 @@ namespace DreemurrStudio.Network
         [SerializeField]
         [Tooltip("连接到的服务器的端口号")]
         private int serverPort = 8888;
+        [SerializeField]
+        [Tooltip("是否显示完整的调试信息")]
+        private bool showFullDebug = false;
 
         /// <summary>
         /// tcp客户端
@@ -74,12 +81,19 @@ namespace DreemurrStudio.Network
         /// <summary>
         /// 获取当前连接到的服务器IP端点
         /// </summary>
-        public IPEndPoint ServerIPEP => client.Connected ? new(IPAddress.Parse(serverIP), serverPort) : null;
+        public IPEndPoint ServerIPEP => client.Connected ? new IPEndPoint(IPAddress.Parse(serverIP), serverPort) : null;
 
         private void Start()
-        {
+        { 
+            // 确保调度器已初始化
+            UnityMainThreadDispatcher.Instance();
             if (connectOnStart)
-                ConnectToServer(new IPEndPoint(IPAddress.Parse(serverIP), serverPort), autoGetClientIPEP ? null : new IPEndPoint(IPAddress.Parse(clientIP), clientPort));
+            {
+                // 异步连接，防止卡死主线程
+                var serverEP = new IPEndPoint(IPAddress.Parse(serverIP), serverPort);
+                var clientEP = autoGetClientIPEP ? null : new IPEndPoint(IPAddress.Parse(clientIP), clientPort);
+                Task.Run(() => ConnectToServer(serverEP, clientEP));
+            }
         }
 
         private void OnApplicationQuit()
@@ -98,8 +112,9 @@ namespace DreemurrStudio.Network
             try
             {
                 client = clientIPEP == null ? new TcpClient() : new TcpClient(clientIPEP);
+                // TODO:同步连接会阻塞，建议在Task中调用
                 client.Connect(serverIP, serverPort);
-                stream = client.GetStream();
+                stream = client.GetStream();                
                 // 获取实际连接的服务器IP端点
                 var sep = (IPEndPoint)client.Client.RemoteEndPoint;
                 this.serverIP = sep.Address.ToString();
@@ -107,12 +122,16 @@ namespace DreemurrStudio.Network
                 // 获取实际绑定的客户端IP端点
                 var cip = (IPEndPoint)client.Client.LocalEndPoint;
                 this.clientIP = cip.Address.ToString();
-                this.clientPort = cip.Port;
+                this.clientPort = cip.Port;                
                 // 启动接收线程
                 receiveThread = new Thread(ListenningMessage);
                 receiveThread.IsBackground = true;
-                receiveThread.Start();
-                OnConnectedToServer?.Invoke(cip, sep);
+                receiveThread.Start();                
+                // 分发事件到主线程
+                UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                {
+                    OnConnectedToServer?.Invoke(cip, sep);
+                });
                 Debug.Log("已连接到服务器: " + serverIP + ":" + serverPort);
                 return true;
             }
@@ -155,8 +174,13 @@ namespace DreemurrStudio.Network
             {
                 stream?.Close();
                 client?.Close();
-                receiveThread?.Join();
-                OnDisconnectedFromServer?.Invoke(ClientIPEP, ServerIPEP);
+                // 不建议Join自己的接收线程，容易死锁，尤其是如果Disconnect被接收线程调用时
+                if (receiveThread != null && Thread.CurrentThread != receiveThread)
+                    receiveThread.Join(500);                
+                UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                {
+                    OnDisconnectedFromServer?.Invoke(ClientIPEP, ServerIPEP);
+                });
             }
             catch (Exception e)
             {
@@ -176,45 +200,31 @@ namespace DreemurrStudio.Network
         /// </summary>
         private void ListenningMessage()
         {
-            byte[] lengthBuffer = new byte[MESSAGEHEADLENGTH]; // 4字节用于存储消息长度
+            byte[] lengthBuffer = new byte[MESSAGEHEADLENGTH]; 
             try
             {
                 while (IsConnected)
                 {
-                    if (stream.DataAvailable)
+                    try
                     {
                         // 1. 读取4字节的包头（数据长度）
-                        int bytesRead = stream.Read(lengthBuffer, 0, lengthBuffer.Length);
-                        if (bytesRead < MESSAGEHEADLENGTH) break; // 连接断开或数据不完整
+                        int bytesRead = ReadFull(stream, lengthBuffer, MESSAGEHEADLENGTH);
+                        if (bytesRead < MESSAGEHEADLENGTH) break; 
+                        // 连接断开或数据不完整                        
                         int messageLength = BitConverter.ToInt32(lengthBuffer, 0);
-
+                        if (messageLength <= 0) continue;
                         // 2. 根据长度读取完整的数据
                         var messageBuffer = new byte[messageLength];
-                        int totalBytesRead = 0;
-                        while (totalBytesRead < messageLength)
-                        {
-                            bytesRead = stream.Read(messageBuffer, totalBytesRead, messageLength - totalBytesRead);
-                            if (bytesRead == 0) break; // 连接断开
-                            totalBytesRead += bytesRead;
-                        }
-                        if (totalBytesRead < messageLength) break; // 数据不完整
-
-                        // 3. 触发事件
-                        OnReceivedData?.Invoke(messageBuffer);
-                        if (OnReceivedMessage != null)
-                        {
-                            string message = Encoding.UTF8.GetString(messageBuffer);
-                            Debug.Log("收到服务器消息: " + message);
-                            OnReceivedMessage?.Invoke(message);
-                        }
+                        bytesRead = ReadFull(stream, messageBuffer, messageLength);
+                        if (bytesRead < messageLength) break; // 数据不完整
+                        // 3. 触发事件 (使用Dispatcher)
+                        UnityMainThreadDispatcher.Instance().Enqueue(() =>HandleReceivedData(messageBuffer));
                     }
-                    Thread.Sleep(10);
+                    catch (IOException)
+                    {
+                        break;
+                    }
                 }
-            }
-            catch (IOException ex)
-            {
-                // 当流被关闭时，会抛出此异常，是正常断开流程的一部分
-                Debug.Log("连接已由本地或远程主机关闭: " + ex.Message);
             }
             catch (Exception ex)
             {
@@ -223,6 +233,7 @@ namespace DreemurrStudio.Network
             }
             finally
             {
+                Debug.Log("连接已由远程主机关闭");
                 // 确保在线程退出时执行断开逻辑
                 if (IsConnected)
                     UnityMainThreadDispatcher.Instance().Enqueue(Disconnect);
@@ -230,14 +241,34 @@ namespace DreemurrStudio.Network
         }
 
         /// <summary>
-        /// 发送消息到服务器
+        /// 辅助方法：确保读取指定长度的数据
         /// </summary>
-        /// <param name="message">要直接发送的信息</param>
-        public void SendToServer(string message)
+        private int ReadFull(NetworkStream stream, byte[] buffer, int length)
         {
-            if (!IsConnected || stream == null) return;
-            byte[] data = Encoding.UTF8.GetBytes(message);
-            SendToServer(data, message);
+            int totalRead = 0;
+            while (totalRead < length)
+            {
+                int read = stream.Read(buffer, totalRead, length - totalRead);
+                if (read == 0) return totalRead;
+                totalRead += read;
+            }
+            return totalRead;
+        }
+
+        /// <summary>
+        /// 处理收到的数据
+        /// </summary>
+        /// <param name="data">收到的原始字节数据</param>
+        private void HandleReceivedData(byte[] data)
+        {
+            OnReceivedRawData?.Invoke(data);
+            if(showFullDebug)Debug.Log($"收到来自服务器的数据({data.Length}B)");
+            if (OnReceivedMessage != null)
+            {
+                string message = Encoding.UTF8.GetString(data);
+                Debug.Log("收到服务器消息: " + message);
+                OnReceivedMessage?.Invoke(message);
+            }
         }
 
         /// <summary>
@@ -245,16 +276,24 @@ namespace DreemurrStudio.Network
         /// </summary>
         /// <param name="data">发送的原始字节数据</param>
         /// <param name="debugRemark">日志输出信息，不需要时可不填</param>
-        public void SendToServer(byte[] data,string debugRemark = "")
+        public void SendToServer(byte[] data, bool? useLengthHead = null, string debugRemark = "")
         {
             if (!IsConnected || stream == null) return;
             try
             {
-                // 1. 准备长度包头
-                byte[] lengthPrefix = BitConverter.GetBytes(data.Length);
-                // 2. 发送包头和数据
-                stream.Write(lengthPrefix, 0, lengthPrefix.Length);
-                stream.Write(data, 0, data.Length);
+                byte[] fullData = data;
+                int prefixLength = 0;
+                if (useLengthHead ?? this.useLengthHead)
+                {
+                    // 组合长度包头和数据
+                    byte[] lengthPrefix = BitConverter.GetBytes(data.Length);
+                    fullData = new byte[prefixLength + data.Length];
+                    Buffer.BlockCopy(lengthPrefix, 0, fullData, 0, prefixLength);
+                    prefixLength = lengthPrefix.Length;
+                }
+                // 发送数据
+                Buffer.BlockCopy(data, 0, fullData, prefixLength, data.Length);
+                stream.Write(fullData, 0, fullData.Length);
                 // 调试日志输出
                 debugRemark = string.IsNullOrEmpty(debugRemark) ? "" : $"[{debugRemark}]";
                 Debug.Log($"已向服务器发送数据{debugRemark}({data.Length})");
@@ -264,6 +303,14 @@ namespace DreemurrStudio.Network
                 Debug.LogWarning("发送数据失败: " + ex.Message);
             }
         }
+        /// <summary>
+        /// 发送消息到服务器
+        /// </summary>
+        /// <param name="message">要直接发送的信息</param>
+        /// <param name="useLengthHead">是否使用长度包头，若不指定则使用预设值</param>
+        /// <param name="debugRemark">日志输出信息，不需要时可不填</param>
+        public void SendToServer(string message, bool? useLengthHead = null, string debugRemark = "文本消息") => SendToServer(Encoding.UTF8.GetBytes(message), useLengthHead, debugRemark);
+
 
         #region 模拟测试
 #if UNITY_EDITOR
@@ -272,7 +319,7 @@ namespace DreemurrStudio.Network
         public string receivedMessage;
 
         [ContextMenu("模拟接收")]
-        public void SimulateReceive() => OnReceivedMessage?.Invoke(receivedMessage);
+        public void SimulateReceive() => HandleReceivedData(Encoding.UTF8.GetBytes(receivedMessage));
 
         [Header("模拟发送")]
         [Tooltip("用于测试的发送消息内容")]

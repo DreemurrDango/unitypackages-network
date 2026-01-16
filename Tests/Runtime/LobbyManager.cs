@@ -219,10 +219,10 @@ namespace DreemurrStudio.Network.DEMO
             if (lobbyState == LobbyState.InLobby) DoExitLobby();
         }
 
-        public void JoinRoom(IPEndPoint hostIPEP)
+        public void JoinRoom(IPEndPoint hostIPEP,IPEndPoint clientIPEP)
         {
             if (lobbyState == LobbyState.Joining || tcpClient.IsConnected) return;
-            DoJoinRoom(hostIPEP);
+            DoJoinRoom(hostIPEP, clientIPEP);
         }
 
         public void Speak(string words)
@@ -322,11 +322,11 @@ namespace DreemurrStudio.Network.DEMO
         /// <summary>
         /// 加入一个房间
         /// </summary>
-        private void DoJoinRoom(IPEndPoint hostIPEP)
+        private void DoJoinRoom(IPEndPoint hostIPEP,IPEndPoint clientIPEP)
         {
             Debug.Log($"正在尝试加入{hostIPEP}");
             lobbyState = LobbyState.Joining;
-            tcpClient.ConnectToServer(hostIPEP);
+            tcpClient.ConnectToServer(hostIPEP, clientIPEP);
         }
 
         /// <summary>

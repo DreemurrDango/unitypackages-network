@@ -10,7 +10,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2074916784875201081, guid: 46ac2c308a659a141a68b008d3f7142a, type: 3}
       propertyPath: m_Name
-      value: UDPBoardcast Variant
+      value: UDPBoardcast
       objectReference: {fileID: 0}
     - target: {fileID: 2645137917777297134, guid: 46ac2c308a659a141a68b008d3f7142a, type: 3}
       propertyPath: localIP
@@ -19,6 +19,10 @@ PrefabInstance:
     - target: {fileID: 2645137917777297134, guid: 46ac2c308a659a141a68b008d3f7142a, type: 3}
       propertyPath: localPort
       value: 9999
+      objectReference: {fileID: 0}
+    - target: {fileID: 2645137917777297134, guid: 46ac2c308a659a141a68b008d3f7142a, type: 3}
+      propertyPath: enableBroadcast
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5818178112786011822, guid: 46ac2c308a659a141a68b008d3f7142a, type: 3}
       propertyPath: m_LocalPosition.x

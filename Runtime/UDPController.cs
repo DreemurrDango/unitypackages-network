@@ -113,7 +113,6 @@ namespace DreemurrStudio.Network
                     // 注意：UdpClient.ReceiveAsync 不支持 CancellationToken，
                     // 如果一直没有收到消息，这里会一直等待，直到 UdpClient 被 Close() 
                     UdpReceiveResult result = await udpClient.ReceiveAsync();
-                    Debug.Log("收到UDP数据包");
                     // 如果在等待过程中被取消，则退出
                     if (token.IsCancellationRequested) break;
 
