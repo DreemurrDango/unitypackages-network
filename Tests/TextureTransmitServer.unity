@@ -414,8 +414,12 @@ PrefabInstance:
       value: 8888
       objectReference: {fileID: 0}
     - target: {fileID: 3957872553933794113, guid: 85aef5e1127109a48af362b31e164a2b, type: 3}
+      propertyPath: serverIP
+      value: 192.168.2.114
+      objectReference: {fileID: 0}
+    - target: {fileID: 3957872553933794113, guid: 85aef5e1127109a48af362b31e164a2b, type: 3}
       propertyPath: showFullDebug
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3957872553933794113, guid: 85aef5e1127109a48af362b31e164a2b, type: 3}
       propertyPath: useLengthHead

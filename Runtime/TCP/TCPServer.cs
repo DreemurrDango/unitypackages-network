@@ -100,7 +100,6 @@ namespace DreemurrStudio.Network
 
         private void OnDestroy()
         {
-            UnityMainThreadDispatcher.Instance();
             if (inRunning) StopServer();
         }
 
@@ -216,7 +215,7 @@ namespace DreemurrStudio.Network
                             if (bytesRead < MESSAGEHEADLENGTH) break;
                             int messageLength = BitConverter.ToInt32(buffer, 0);
                             if (messageLength <= 0) continue;
-                            if (showFullDebug) Debug.Log($"{serverIP}:{port}接收到带包头数据，包体长度：{messageLength}字节");
+                            if (showFullDebug) Debug.Log($"{serverIP}:{port}接收到来自{clientIPEP}的带包头数据，包体长度：{messageLength}字节");
 
                             // 2. 根据包体长度读取包体
                             messageData = new byte[messageLength];
@@ -228,7 +227,7 @@ namespace DreemurrStudio.Network
                             // 1. 直接读取数据流
                             int bytesRead = stream.Read(buffer, 0, buffer.Length);
                             if (bytesRead == 0) break; // 连接断开
-                            if (showFullDebug) Debug.Log($"{serverIP}:{port}接收到{bytesRead}字节长度的数据");
+                            if (showFullDebug) Debug.Log($"{serverIP}:{port}接收到来自{clientIPEP}的{bytesRead}字节长度的数据");
                             // 仅拷贝实际读取的数据
                             messageData = new byte[bytesRead];
                             Buffer.BlockCopy(buffer, 0, messageData, 0, bytesRead);

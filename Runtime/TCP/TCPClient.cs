@@ -124,7 +124,7 @@ namespace DreemurrStudio.Network
                 this.clientIP = cip.Address.ToString();
                 this.clientPort = cip.Port;                
                 // 启动接收线程
-                receiveThread = new Thread(ListenningMessage);
+                receiveThread = new Thread(() => ListenningMessage(useLengthHead));
                 receiveThread.IsBackground = true;
                 receiveThread.Start();                
                 // 分发事件到主线程
@@ -198,7 +198,7 @@ namespace DreemurrStudio.Network
         /// <summary>
         /// 接收服务器消息
         /// </summary>
-        private void ListenningMessage()
+        private void ListenningMessage(bool useLengthHead)
         {
             byte[] lengthBuffer = new byte[MESSAGEHEADLENGTH]; 
             try
@@ -207,36 +207,53 @@ namespace DreemurrStudio.Network
                 {
                     try
                     {
-                        // 1. 读取4字节的包头（数据长度）
-                        int bytesRead = ReadFull(stream, lengthBuffer, MESSAGEHEADLENGTH);
-                        if (bytesRead < MESSAGEHEADLENGTH) break; 
-                        // 连接断开或数据不完整                        
-                        int messageLength = BitConverter.ToInt32(lengthBuffer, 0);
-                        if (messageLength <= 0) continue;
-                        // 2. 根据长度读取完整的数据
-                        var messageBuffer = new byte[messageLength];
-                        bytesRead = ReadFull(stream, messageBuffer, messageLength);
-                        if (bytesRead < messageLength) break; // 数据不完整
+                        byte[] messageData = null;
+                        if(useLengthHead)
+                        {
+                            // 1. 读取4字节的包头（数据长度）
+                            int bytesRead = ReadFull(stream, lengthBuffer, MESSAGEHEADLENGTH);
+                            if (bytesRead < MESSAGEHEADLENGTH) break;   
+                            int messageLength = BitConverter.ToInt32(lengthBuffer, 0);
+                            if (messageLength <= 0) continue;
+                            if (showFullDebug) Debug.Log($"接收到来自服务器的带包头数据，包体长度: {messageLength}B");
+
+                            // 2. 根据长度读取完整的数据
+                            messageData = new byte[messageLength];
+                            bytesRead = ReadFull(stream, messageData, messageLength);
+                            if (bytesRead < messageLength) break; // 数据不完整
+                        }
+                        else
+                        {
+                            // 1. 直接读取可用数据
+                            int bytesRead = stream.Read(lengthBuffer, 0, lengthBuffer.Length);
+                            if (bytesRead == 0) break; // 连接断开
+                            if(showFullDebug) Debug.Log($"接收到来自服务器的数据({bytesRead}B)");
+                            messageData = new byte[bytesRead];
+                            Buffer.BlockCopy(lengthBuffer, 0, messageData, 0, bytesRead);
+                        }
                         // 3. 触发事件 (使用Dispatcher)
-                        UnityMainThreadDispatcher.Instance().Enqueue(() =>HandleReceivedData(messageBuffer));
+                        if(messageData != null)
+                        {
+                            UnityMainThreadDispatcher.Instance().Enqueue(() => HandleReceivedData(messageData));
+                        }                        
                     }
-                    catch (IOException)
+                    catch (IOException ioe)
                     {
+                        Debug.LogError($"与服务器的连接意外关闭: {ioe}");
                         break;
                     }
                 }
             }
             catch (Exception ex)
             {
-                // 其他意外异常
-                Debug.LogWarning("接收数据异常: " + ex.Message);
+                Debug.LogWarning("通信数据异常: " + ex.Message);
             }
             finally
             {
-                Debug.Log("连接已由远程主机关闭");
+                Debug.Log("连接已关闭");
                 // 确保在线程退出时执行断开逻辑
                 if (IsConnected)
-                    UnityMainThreadDispatcher.Instance().Enqueue(Disconnect);
+                    UnityMainThreadDispatcher.Instance(false)?.Enqueue(Disconnect);
             }
         }
 
