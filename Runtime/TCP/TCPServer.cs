@@ -95,7 +95,7 @@ namespace DreemurrStudio.Network
         private void Start()
         {
             UnityMainThreadDispatcher.Instance();
-            if (startOnStart) StartServer(serverIP, port);
+            if (startOnStart) StartServer();
         }
 
         private void OnDestroy()
@@ -106,7 +106,7 @@ namespace DreemurrStudio.Network
         /// <summary>
         /// 打开服务器
         /// </summary>
-        public void StartServer(IPEndPoint ipED,bool useLengthHead = false)
+        public void StartServer(IPEndPoint ipED,bool? useLengthHead = null)
         {
             if (inRunning) return;
             inRunning = true;
@@ -118,7 +118,7 @@ namespace DreemurrStudio.Network
                 var ipep = (IPEndPoint)listener.LocalEndpoint;
                 this.serverIP = ipep.Address.ToString();
                 this.port = ipep.Port;
-                this.useLengthHead = useLengthHead;
+                if (useLengthHead != null) this.useLengthHead = useLengthHead.Value;
                 // 启动监听线程
                 listenThread = new Thread(ListenForClients);
                 listenThread.IsBackground = true;
@@ -134,7 +134,7 @@ namespace DreemurrStudio.Network
         /// <summary>
         /// 打开服务器
         /// </summary>
-        public void StartServer(string ip, int port, bool useLengthHead = false) =>
+        public void StartServer(string ip, int port, bool? useLengthHead = null) =>
             StartServer(new IPEndPoint(IPAddress.Parse(ip), port), useLengthHead);
         [ContextMenu("启动服务器")]
         /// <summary>
@@ -303,22 +303,13 @@ namespace DreemurrStudio.Network
         }
 
         /// <summary>
-        /// 向指定客户端发送消息
-        /// </summary>
-        /// <param name="aimIPEP">要发送到的目标IP端点</param>
-        /// <param name="message">要发送的客户端信息</param>
-        /// <param name="useLengthHead">是否使用长度包头，可指定为空，以使用服务器的设置</param>
-        /// <param name="debugRemake">调试标记，用于标记当前发送的内容信息，只做日志输出，不会传输</param>
-        public void SendToClient(IPEndPoint aimIPEP, string message,bool? useLengthHead = false,string debugRemake = "文本消息") => SendToClient(aimIPEP, Encoding.UTF8.GetBytes(message), useLengthHead, debugRemake);
-
-        /// <summary>
         /// 向特定客户端发送原始字节数据
         /// </summary>
         /// <param name="aimIPEP">要发送的客户端目标</param>
         /// <param name="data">要发送的二进制字节数组数据</param>
         /// <param name="useLengthHead">是否使用长度包头</param>"
         /// <param name="debugRemake">可附加的调试信息</param>
-        public void SendToClient(IPEndPoint aimIPEP, byte[] data,bool? useLengthHead = false,string debugRemake = "")
+        public void SendToClient(IPEndPoint aimIPEP, byte[] data, bool? useLengthHead = false, string debugRemake = "")
         {
             try
             {
@@ -338,14 +329,14 @@ namespace DreemurrStudio.Network
                 // 准备发送数据
                 byte[] fullData = data;
                 int prefixLength = 0;
-                if(useLengthHead ?? this.useLengthHead)
+                if (useLengthHead ?? this.useLengthHead)
                 {
                     // 1. 准备长度包头
                     var lengthPrefix = BitConverter.GetBytes(data.Length);
+                    prefixLength = lengthPrefix.Length;
                     fullData = new byte[lengthPrefix.Length + data.Length];
                     // 2. 发送包头和数据
                     Buffer.BlockCopy(lengthPrefix, 0, data, 0, lengthPrefix.Length);
-                    prefixLength = lengthPrefix.Length;
                 }
                 Buffer.BlockCopy(data, 0, fullData, prefixLength, data.Length);
                 stream.Write(fullData, 0, fullData.Length);
@@ -358,14 +349,14 @@ namespace DreemurrStudio.Network
                 Debug.LogWarning($"发送消息{debugRemake}失败: " + ex.Message);
             }
         }
-
         /// <summary>
-        /// 向所有已连接客户端发送消息
+        /// 向指定客户端发送消息
         /// </summary>
-        /// <param name="message">要发送的消息内容</param>
-        /// <param name="debugRemake">调试标记，用于标记当前发送的内容信息，只做日志输出，不会传输</param>
+        /// <param name="aimIPEP">要发送到的目标IP端点</param>
+        /// <param name="message">要发送的客户端信息</param>
         /// <param name="useLengthHead">是否使用长度包头，可指定为空，以使用服务器的设置</param>
-        public void SendToAllClients(string message,bool? useLengthHead = null,string debugRemake = "文本消息") => SendToAllClients(Encoding.UTF8.GetBytes(message), useLengthHead, debugRemake);
+        /// <param name="debugRemake">调试标记，用于标记当前发送的内容信息，只做日志输出，不会传输</param>
+        public void SendToClient(IPEndPoint aimIPEP, string message,bool? useLengthHead = false,string debugRemake = "文本消息") => SendToClient(aimIPEP, Encoding.UTF8.GetBytes(message), useLengthHead, debugRemake);
 
         /// <summary>
         /// 向所有客户端广播原始字节数据
@@ -373,7 +364,7 @@ namespace DreemurrStudio.Network
         /// <param name="data">要发送的原始字节数据</param>
         /// <param name="useLengthHead">是否使用长度包头，可指定为空，以使用服务器的设置</param>
         /// <param name="debugRemake">调试标记，用于标记当前发送的内容信息，只做日志输出，不会传输</param>
-        public void SendToAllClients(byte[] data,bool? useLengthHead = null, string debugRemake = "")
+        public void SendToAllClients(byte[] data, bool? useLengthHead = null, string debugRemake = "")
         {
             int prefixLength = 0;
             byte[] fullData = data;
@@ -381,10 +372,10 @@ namespace DreemurrStudio.Network
             if (useLengthHead ?? this.useLengthHead)
             {
                 // 使用长度包头
-                byte[] lengthPrefix = BitConverter.GetBytes(data.Length);
+                byte[] lengthPrefix = BitConverter.GetBytes(data.Length); // int32占4字节
+                prefixLength = lengthPrefix.Length;
                 fullData = new byte[lengthPrefix.Length + data.Length];
                 Buffer.BlockCopy(lengthPrefix, 0, fullData, 0, lengthPrefix.Length);
-                prefixLength = lengthPrefix.Length;
             }
             Buffer.BlockCopy(data, 0, fullData, prefixLength, data.Length);
             var remake = string.IsNullOrEmpty(debugRemake) ? "" : $"[{debugRemake}]";
@@ -413,6 +404,14 @@ namespace DreemurrStudio.Network
             }
             Debug.Log($"已向{successCount}个客户端发送TCP消息 {remake}({(prefixLength > 0 ? prefixLength + "+" : "")}{data.Length}B)");
         }
+        /// <summary>
+        /// 向所有已连接客户端发送消息
+        /// </summary>
+        /// <param name="message">要发送的消息内容</param>
+        /// <param name="debugRemake">调试标记，用于标记当前发送的内容信息，只做日志输出，不会传输</param>
+        /// <param name="useLengthHead">是否使用长度包头，可指定为空，以使用服务器的设置</param>
+        public void SendToAllClients(string message,bool? useLengthHead = null,string debugRemake = "文本消息") => SendToAllClients(Encoding.UTF8.GetBytes(message), useLengthHead, debugRemake);
+
 
         #region 模拟测试
 #if UNITY_EDITOR

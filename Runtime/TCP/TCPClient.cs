@@ -312,10 +312,10 @@ namespace DreemurrStudio.Network
                 if (useLengthHead ?? this.useLengthHead)
                 {
                     // 组合长度包头和数据
-                    byte[] lengthPrefix = BitConverter.GetBytes(data.Length);
+                    byte[] lengthPrefix = BitConverter.GetBytes(data.Length); // int32占4字节
+                    prefixLength = lengthPrefix.Length;
                     fullData = new byte[prefixLength + data.Length];
                     Buffer.BlockCopy(lengthPrefix, 0, fullData, 0, prefixLength);
-                    prefixLength = lengthPrefix.Length;
                 }
                 // 发送数据
                 Buffer.BlockCopy(data, 0, fullData, prefixLength, data.Length);
