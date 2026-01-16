@@ -106,12 +106,6 @@ namespace DreemurrStudio.Network
         /// <summary>
         /// 打开服务器
         /// </summary>
-        public void StartServer(string ip, int port, bool useLengthHead = false) =>
-            StartServer(new IPEndPoint(IPAddress.Parse(ip), port), useLengthHead);
-
-        /// <summary>
-        /// 打开服务器
-        /// </summary>
         public void StartServer(IPEndPoint ipED,bool useLengthHead = false)
         {
             if (inRunning) return;
@@ -137,7 +131,18 @@ namespace DreemurrStudio.Network
                 Debug.LogError($"TCP服务器{ipED}启动失败:{e}");
             }
         }
+        /// <summary>
+        /// 打开服务器
+        /// </summary>
+        public void StartServer(string ip, int port, bool useLengthHead = false) =>
+            StartServer(new IPEndPoint(IPAddress.Parse(ip), port), useLengthHead);
+        [ContextMenu("启动服务器")]
+        /// <summary>
+        /// 使用预设参数启动服务器
+        /// </summary>
+        public void StartServer() => StartServer(serverIP, port, useLengthHead);
 
+        [ContextMenu("停止服务器")]
         /// <summary>
         /// 停止运行服务器
         /// </summary>
@@ -252,7 +257,7 @@ namespace DreemurrStudio.Network
             finally
             {
                 Debug.Log($"客户端通信结束: {clientIPEP}");
-                UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                UnityMainThreadDispatcher.Instance(false)?.Enqueue(() =>
                 {
                     OnClientDisconnected?.Invoke(clientIPEP);
                 });                

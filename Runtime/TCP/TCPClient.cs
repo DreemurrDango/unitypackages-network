@@ -95,9 +95,7 @@ namespace DreemurrStudio.Network
             if (connectOnStart)
             {
                 // 异步连接，防止卡死主线程
-                var serverEP = new IPEndPoint(IPAddress.Parse(serverIP), serverPort);
-                var clientEP = autoGetClientIPEP ? null : new IPEndPoint(IPAddress.Parse(clientIP), clientPort);
-                Task.Run(() => ConnectToServer(serverEP, clientEP));
+                Task.Run(() => ConnectToServer());
             }
         }
 
@@ -168,7 +166,14 @@ namespace DreemurrStudio.Network
         /// <param name="clientPort">客户端端口号</param>
         public bool ConnectToServer(string serverIP, int serverPort, string clientIP, int clientPort) =>
             ConnectToServer(new IPEndPoint(IPAddress.Parse(serverIP), serverPort), new IPEndPoint(IPAddress.Parse(clientIP), clientPort));
+        [ContextMenu("连接服务器")]
+        /// <summary>
+        /// 使用预设的服务器和客户端IP端点连接到服务器
+        /// </summary>
+        /// <returns></returns>
+        public bool ConnectToServer() => ConnectToServer(serverIP, serverPort, clientIP, clientPort);
 
+        [ContextMenu("断开连接")]
         /// <summary>
         /// 与服务器断开连接
         /// </summary>
