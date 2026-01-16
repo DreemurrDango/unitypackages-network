@@ -227,7 +227,7 @@ namespace DreemurrStudio.Network
                             // 1. 直接读取数据流
                             int bytesRead = stream.Read(buffer, 0, buffer.Length);
                             if (bytesRead == 0) break; // 连接断开
-                            if (showFullDebug) Debug.Log($"{serverIP}:{port}接收到来自{clientIPEP}的{bytesRead}字节长度的数据");
+                            if (showFullDebug) Debug.Log($"{serverIP}:{port}接收到{bytesRead}字节长度的数据");
                             // 仅拷贝实际读取的数据
                             messageData = new byte[bytesRead];
                             Buffer.BlockCopy(buffer, 0, messageData, 0, bytesRead);
@@ -240,7 +240,7 @@ namespace DreemurrStudio.Network
                     }
                     catch (IOException ioe)
                     {
-                        Debug.LogError($"与客户端{clientIPEP}的连接已中断:{ioe}");
+                        //Debug.LogError($"与客户端{clientIPEP}的连接已中断:{ioe}");
                         break;
                     }
                 }
@@ -289,7 +289,7 @@ namespace DreemurrStudio.Network
         {
             // 触发收到数据事件
             OnReceivedRawData?.Invoke(clientIPEP, data);
-            if (OnReceivedMessage != null)
+            if (OnReceivedMessage != null || showFullDebug)
             {
                 string message = Encoding.UTF8.GetString(data);
                 Debug.Log($"收到客户端{clientIPEP}的消息: {message}");

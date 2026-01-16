@@ -33,9 +33,14 @@ namespace DreemurrStudio.Network
         [SerializeField]
         [Tooltip("是否在Start时自动连接服务器")]
         private bool connectOnStart = true;
+
+        [Header("消息处理")]
         [SerializeField]
-        [Tooltip("是否在发送和接收数据时使用长度包头")]
+        [Tooltip("接收数据时是否添加长度包头，启用时将收到的数据前4字节作为长度包头进行分段解析，应当在传输较大文本数据或二进制数据(图片、音频、视频流)时启用\n注意：若启用，则客户端发送时也需要对应地启用")]
         private bool useLengthHead = false;
+        [SerializeField]
+        [Tooltip("仅在未使用长度包头时生效，单条消息的最大长度（字节数B），超过该长度的消息将被丢弃")]
+        private int maxMessageSize = 1024;
 
         [Tooltip("连接到服务器时的动作，参数为<客户端IP端点,服务器IP端点>")]
         public event Action<IPEndPoint,IPEndPoint> OnConnectedToServer;
@@ -200,7 +205,7 @@ namespace DreemurrStudio.Network
         /// </summary>
         private void ListenningMessage(bool useLengthHead)
         {
-            byte[] lengthBuffer = new byte[MESSAGEHEADLENGTH]; 
+            byte[] lengthBuffer = useLengthHead ? new byte[MESSAGEHEADLENGTH] : new byte[maxMessageSize];
             try
             {
                 while (IsConnected)
@@ -239,7 +244,7 @@ namespace DreemurrStudio.Network
                     }
                     catch (IOException ioe)
                     {
-                        Debug.LogError($"与服务器的连接意外关闭: {ioe}");
+                        //Debug.LogError($"与服务器的连接意外关闭: {ioe}");
                         break;
                     }
                 }
@@ -279,8 +284,7 @@ namespace DreemurrStudio.Network
         private void HandleReceivedData(byte[] data)
         {
             OnReceivedRawData?.Invoke(data);
-            if(showFullDebug)Debug.Log($"收到来自服务器的数据({data.Length}B)");
-            if (OnReceivedMessage != null)
+            if (OnReceivedMessage != null || showFullDebug)
             {
                 string message = Encoding.UTF8.GetString(data);
                 Debug.Log("收到服务器消息: " + message);
