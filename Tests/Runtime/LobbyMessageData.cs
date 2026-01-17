@@ -34,7 +34,7 @@ namespace DreemurrStudio.Network.DEMO
     public class S2C_PlayerInfoUpdateMessage : LobbyMessageDataBase
     {
         public RoomInfo roomInfo;
-        public Dictionary<IPEndPoint,PlayerInfo> playerInfos;
+        public Dictionary<IPID,PlayerInfo> playerInfos;
     }
 
     [System.Serializable]

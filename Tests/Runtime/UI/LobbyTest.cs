@@ -100,13 +100,6 @@ namespace DreemurrStudio.Network.DEMO
         [Tooltip("用于测试的，进行强制连接的端口号")]
         private int testPort;
 
-        //[ContextMenu("测试连接")]
-        //public void TestForceJoinRoom()
-        //{
-        //    var ipep = new IPEndPoint(IPAddress.Parse(testIPAdress), testPort);
-        //    LobbyManager.Instance.JoinRoom(ipep);
-        //}
-
         /// <summary>
         /// 获取或设置UI输入框中的IP和端口号。
         /// </summary>
@@ -222,7 +215,6 @@ namespace DreemurrStudio.Network.DEMO
             }
         }
 
-
         #region 主菜单界面
         /// <summary>
         /// “创建房间”按钮点击事件处理。
@@ -273,7 +265,7 @@ namespace DreemurrStudio.Network.DEMO
         #endregion
 
         #region 大厅界面
-        private Dictionary<IPEndPoint, RoomItem> roomItems = new Dictionary<IPEndPoint, RoomItem>();
+        private Dictionary<IPID, RoomItem> roomItems = new();
 
         /// <summary>
         /// 大厅房间列表项中“加入”按钮的点击回调。
@@ -315,10 +307,10 @@ namespace DreemurrStudio.Network.DEMO
         /// <param name="info">被移除的房间信息。</param>
         private void OnLobbyRoomRemoved(RoomInfo info)
         {
-            if(roomItems.TryGetValue(info.IPEP, out RoomItem item))
+            if(roomItems.TryGetValue(info.hostIPID, out RoomItem item))
             {
                 item.OnJoinRoomButtonDown -= OnLobbyRoomItemJoinButtonDown;
-                roomItems.Remove(info.IPEP);
+                roomItems.Remove(info.hostIPID);
                 Destroy(item.gameObject);
             }
             roomNumText.text = $"共发现{roomItems.Count}个房间";
@@ -331,13 +323,13 @@ namespace DreemurrStudio.Network.DEMO
         private void OnLobbyRoomUpdated(RoomInfo info)
         {
             // 如果房间已存在于UI列表中，则更新它
-            if(roomItems.TryGetValue(info.IPEP, out RoomItem item))
+            if(roomItems.TryGetValue(info.hostIPID, out RoomItem item))
                 item.Info = info;
             else // 否则，创建一个新的UI项
             {
                 var newItem = CreateLobbyRoomItem(info);
                 newItem.OnJoinRoomButtonDown += OnLobbyRoomItemJoinButtonDown;
-                roomItems.Add(info.IPEP, newItem);
+                roomItems.Add(info.hostIPID, newItem);
             }
             roomNumText.text = $"共发现{roomItems.Count}个房间";
         }
@@ -360,7 +352,7 @@ namespace DreemurrStudio.Network.DEMO
         /// <summary>
         /// 存储房间内玩家信息的UI项列表。
         /// </summary>
-        private Dictionary<IPEndPoint, PlayerInfoItem> playerInfoItems = new();
+        private Dictionary<IPID, PlayerInfoItem> playerInfoItems = new();
         /// <summary>
         /// 存储房间聊天消息的UI项队列。
         /// </summary>
@@ -395,8 +387,8 @@ namespace DreemurrStudio.Network.DEMO
             talkInputField.text = string.Empty;
             // 将房主自己添加到玩家列表中
             var playerInfo = new PlayerInfo() { playerName = PlayerName };
-            var item = CreatePlayerInfoItem(playerInfo, new IPEndPoint(IPAddress.Parse(info.hostIP),info.hostPort) , true, true);
-            playerInfoItems.Add(info.IPEP, item);
+            var item = CreatePlayerInfoItem(playerInfo, info.hostIPID.ToString() , true, true);
+            playerInfoItems.Add(info.hostIPID, item);
         }
 
         /// <summary>
@@ -441,16 +433,16 @@ namespace DreemurrStudio.Network.DEMO
         /// </summary>
         /// <param name="ipep">玩家的IP端点。</param>
         /// <param name="info">玩家的最新信息。</param>
-        private void OnPlayerInfoUpdated(IPEndPoint ipep, PlayerInfo info)
+        private void OnPlayerInfoUpdated(IPID ipep, PlayerInfo info)
         {
             var localIPEP = LobbyManager.Instance.LocalIPEP;
             var hosterIPEP = LobbyManager.Instance.CurrentRoomIPEP;
             // 更新或创建玩家UI项
             if (playerInfoItems.TryGetValue(ipep, out var item))
-                item.Init(info.playerName, ipep, ipep.Equals(hosterIPEP), ipep.Equals(localIPEP));
+                item.Init(info.playerName, ipep.ToString(), ipep.Equals(hosterIPEP), ipep.Equals(localIPEP));
             else
             {
-                var newItem = CreatePlayerInfoItem(info, ipep, ipep.Equals(hosterIPEP), ipep.Equals(localIPEP));
+                var newItem = CreatePlayerInfoItem(info, ipep.ToString(), ipep.Equals(hosterIPEP), ipep.Equals(localIPEP));
                 playerInfoItems.Add(ipep, newItem);
             }
         }
@@ -460,7 +452,7 @@ namespace DreemurrStudio.Network.DEMO
         /// </summary>
         /// <param name="info">房间的最新信息。</param>
         /// <param name="roomPlayers">房间内所有玩家的完整列表。</param>
-        private void OnRoomUpdated(RoomInfo info, Dictionary<IPEndPoint, PlayerInfo> roomPlayers)
+        private void OnRoomUpdated(RoomInfo info, Dictionary<IPID, PlayerInfo> roomPlayers)
         {
             // 如果当前不在房间内，则先执行进入房间的UI逻辑
             if(currentState != State.InRoom) DoEnterRoom(info);
@@ -470,10 +462,10 @@ namespace DreemurrStudio.Network.DEMO
             foreach (var pi in roomPlayers)
             {
                 if(playerInfoItems.TryGetValue(pi.Key,out var item))
-                    item.Init(pi.Value.playerName, pi.Key, pi.Key.Equals(info.IPEP), pi.Key.Equals(localIPEP));
+                    item.Init(pi.Value.playerName, pi.Key.ToString(), pi.Key.Equals(info.IPEP), pi.Key.Equals(localIPEP));
                 else
                 {
-                    var newItem = CreatePlayerInfoItem(pi.Value, pi.Key, pi.Key.Equals(info.IPEP), pi.Key.Equals(localIPEP));
+                    var newItem = CreatePlayerInfoItem(pi.Value, pi.Key.ToString(), pi.Key.Equals(info.IPEP), pi.Key.Equals(localIPEP));
                     playerInfoItems.Add(pi.Key, newItem);
                 }
             }
@@ -506,7 +498,7 @@ namespace DreemurrStudio.Network.DEMO
         /// <summary>
         /// 创建并初始化一个新的玩家信息UI项。
         /// </summary>
-        private PlayerInfoItem CreatePlayerInfoItem(PlayerInfo info,IPEndPoint ipep,bool isHost,bool isLocal)
+        private PlayerInfoItem CreatePlayerInfoItem(PlayerInfo info,string ipep,bool isHost,bool isLocal)
         {
             var go = Instantiate(playerInfoItemPrefab.gameObject, playerInfoItemCollection);
             var item = go.GetComponent<PlayerInfoItem>();

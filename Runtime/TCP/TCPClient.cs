@@ -129,13 +129,13 @@ namespace DreemurrStudio.Network
                 // 启动接收线程
                 receiveThread = new Thread(() => ListenningMessage(useLengthHead));
                 receiveThread.IsBackground = true;
-                receiveThread.Start();                
+                receiveThread.Start();
+                Debug.Log("已连接到服务器: " + serverIP + ":" + serverPort);
                 // 分发事件到主线程
                 UnityMainThreadDispatcher.Instance().Enqueue(() =>
                 {
                     OnConnectedToServer?.Invoke(cip, sep);
                 });
-                Debug.Log("已连接到服务器: " + serverIP + ":" + serverPort);
                 return true;
             }
             catch (Exception ex)

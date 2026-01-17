@@ -9,6 +9,39 @@ using UnityEngine;
 
 namespace DreemurrStudio.Network.DEMO
 {
+    [System.Serializable]
+    public class IPID
+    {
+        public string ip;
+        public int port;
+
+        /// <summary>
+        /// 获取或设置房主的TCP端点。
+        /// 这个属性作为辅助，不会被序列化。
+        /// </summary>
+        [JsonIgnore]
+        public IPEndPoint IPEP
+        {
+            get => new IPEndPoint(IPAddress.Parse(ip), port);
+            set
+            {
+                ip = value.Address.ToString();
+                port = value.Port;
+            }
+        }
+
+        public IPID(string ip,int port) { this.ip = ip;this.port = port; }
+        public IPID(IPEndPoint ipep) { IPEP = ipep; }
+
+        /// <summary>
+        /// 判断与指定IPEndPoint是否相等
+        /// </summary>
+        /// <param name="ipep"></param>
+        /// <returns></returns>
+        public bool Equals(IPEndPoint ipep) => ipep.Address.ToString() == ip && ipep.Port == port;
+
+        public override string ToString() => $"{ip}:{port}";
+    }
     /// <summary>
     /// 房间列表信息结构体
     /// </summary>
@@ -18,9 +51,7 @@ namespace DreemurrStudio.Network.DEMO
         public string roomName;
         public string hosterName;
 
-        // 修改：不再直接存储 IPEndPoint
-        public string hostIP;
-        public int hostPort;
+        public IPID hostIPID;
 
         public int playerNum;
         //public int maxPlayer;
@@ -35,12 +66,8 @@ namespace DreemurrStudio.Network.DEMO
         [JsonIgnore]
         public IPEndPoint IPEP
         {
-            get => new IPEndPoint(IPAddress.Parse(hostIP), hostPort);
-            set
-            {
-                hostIP = value.Address.ToString();
-                hostPort = value.Port;
-            }
+            get => hostIPID.IPEP;
+            set => hostIPID.IPEP = value;
         }
 
         public string ToJson() => JsonConvert.SerializeObject(this);
@@ -168,8 +195,9 @@ namespace DreemurrStudio.Network.DEMO
         public event Action<RoomInfo> onLobbyRoomRemoved;
         /// <summary>
         /// 作为游客所在房间有信息更新时的回调
+        /// 参数为<当前房间信息,<IP字符串,玩家信息字典>>
         /// </summary>
-        public event Action<RoomInfo, Dictionary<IPEndPoint,PlayerInfo>> onRoomUpdated;
+        public event Action<RoomInfo, Dictionary<IPID, PlayerInfo>> onRoomUpdated;
         /// <summary>
         /// 作为游客离开房间时的回调
         /// </summary>
@@ -324,7 +352,7 @@ namespace DreemurrStudio.Network.DEMO
         /// </summary>
         private void DoJoinRoom(IPEndPoint hostIPEP,IPEndPoint clientIPEP)
         {
-            Debug.Log($"正在尝试加入{hostIPEP}");
+            Debug.Log($"正在尝试使用{clientIPEP}加入{hostIPEP}");
             lobbyState = LobbyState.Joining;
             tcpClient.ConnectToServer(hostIPEP, clientIPEP);
         }
@@ -420,7 +448,7 @@ namespace DreemurrStudio.Network.DEMO
         {
             if (lobbyState == LobbyState.Hosting) return;
             // 1. 启动TCP服务器，端口号设为0时，系统会自动分配一个可用端口
-            udpBroadcaster.Open(broadcastPort,roomInfo.hostIP, false, true);
+            udpBroadcaster.Open(broadcastPort,roomInfo.hostIPID.ip, false, true);
             tcpServer.StartServer(roomInfo.IPEP);
             tcpServer.OnReceivedMessage += OnServerReceiveRoomMessage;
             roomPlayers = new Dictionary<IPEndPoint, PlayerInfo>();
@@ -512,11 +540,14 @@ namespace DreemurrStudio.Network.DEMO
         /// <param name="playerInfos">所有更新的玩家信息</param>
         private void SendTCPMessage_PlayerInfoUpdated(Dictionary<IPEndPoint, PlayerInfo> playerInfos)
         {
+            var infos = new Dictionary<IPID, PlayerInfo>();
+            foreach (var kvp in playerInfos)
+                infos.Add(new IPID(kvp.Key), kvp.Value);
             var message = new S2C_PlayerInfoUpdateMessage
             {
                 messageType = LobbyMessageType.S2C_PlayerInfoUpdated,
                 roomInfo = currrentRoomInfo,
-                playerInfos = new(playerInfos)
+                playerInfos = new(infos)
             };
             var json = JsonConvert.SerializeObject(message);
             tcpServer.SendToAllClients(json);
