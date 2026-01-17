@@ -10,7 +10,7 @@ using UnityEngine;
 namespace DreemurrStudio.Network.DEMO
 {
     [System.Serializable]
-    public class IPID
+    public struct IPID
     {
         public string ip;
         public int port;
@@ -31,7 +31,7 @@ namespace DreemurrStudio.Network.DEMO
         }
 
         public IPID(string ip,int port) { this.ip = ip;this.port = port; }
-        public IPID(IPEndPoint ipep) { IPEP = ipep; }
+        public IPID(IPEndPoint ipep) { this.ip = ipep.Address.ToString();this.port = ipep.Port; }
 
         /// <summary>
         /// 判断与指定IPEndPoint是否相等
@@ -270,16 +270,20 @@ namespace DreemurrStudio.Network.DEMO
         }
 
         /// <summary>
+        /// 定期清理超时房间的协程引用
+        /// </summary>
+        Coroutine timeoutRoomCleanCoroutine = null;
+        /// <summary>
         /// 游客进入大厅
         /// </summary>
         private void DoEnterLobby(string ipAddress)
         {
             discoveredRooms = new Dictionary<IPEndPoint, RoomInfo>();
-            StartCoroutine(CleanupTimeoutRoomsCoroutine());
             // 监听网络消息
             udpBroadcaster.Open(broadcastPort, ipAddress, true, true);
             udpBroadcaster.onReceiveMessage.AddListener(OnReceiveBroadcast);
             lobbyState = LobbyState.InLobby;
+            timeoutRoomCleanCoroutine = StartCoroutine(CleanupTimeoutRoomsCoroutine());
         }
         #region 发送消息
         private void SendTCPMessage_PlayerInfoUpdated(PlayerInfo playerInfo)
@@ -418,7 +422,8 @@ namespace DreemurrStudio.Network.DEMO
         private void DoExitLobby()
         {
             if(lobbyState != LobbyState.InLobby) return;
-            StopCoroutine(CleanupTimeoutRoomsCoroutine());
+            StopCoroutine(timeoutRoomCleanCoroutine);
+            timeoutRoomCleanCoroutine = null;
             // 取消监听
             udpBroadcaster.Close();
             udpBroadcaster.onReceiveMessage.RemoveListener(OnReceiveBroadcast);
@@ -441,6 +446,10 @@ namespace DreemurrStudio.Network.DEMO
         }
 
         /// <summary>
+        /// 持续广播所主持房间信息的协程引用
+        /// </summary>
+        private Coroutine broadcastHostingRoomCoroutine = null;
+        /// <summary>
         /// 主持一个新房间
         /// </summary>
         /// <param name="roomInfo">房间信息</param>
@@ -458,7 +467,7 @@ namespace DreemurrStudio.Network.DEMO
             lobbyState = LobbyState.Hosting;
             onRoomHosted?.Invoke(roomInfo);
             // 开始广播房间信息协程
-            StartCoroutine(BroadcastHostingRoomCoroutine());
+            broadcastHostingRoomCoroutine = StartCoroutine(BroadcastHostingRoomCoroutine());
         }
 
         /// <summary>
@@ -516,6 +525,9 @@ namespace DreemurrStudio.Network.DEMO
         /// </summary>
         private void DoCloseHost()
         {
+            if (lobbyState != LobbyState.Hosting) return;
+            StopCoroutine(broadcastHostingRoomCoroutine);
+            broadcastHostingRoomCoroutine = null;
             tcpServer.StopServer();
             tcpServer.OnReceivedMessage -= OnServerReceiveRoomMessage;
             udpBroadcaster.Close();
