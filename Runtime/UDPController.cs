@@ -197,7 +197,6 @@ namespace DreemurrStudio.Network
         public void Close()
         {
             if (udpClient == null) return;
-
             InReceiving = false; // 这会触发 CancellationToken 的取消
             udpClient.Close();
             udpClient = null;

@@ -251,10 +251,12 @@ namespace DreemurrStudio.Network.DEMO
         private void DoEnterLobby(string ipAddress)
         {
             discoveredRooms = new Dictionary<IPEndPoint, RoomInfo>();
-            if (timeoutRoomCleanCoroutine == null) timeoutRoomCleanCoroutine = StartCoroutine(CleanupTimeoutRoomsCoroutine());
+            if(timeoutRoomCleanCoroutine != null) StopCoroutine(timeoutRoomCleanCoroutine);
             // 监听网络消息
             udpBroadcaster.Open(broadcastPort, ipAddress, true, true);
             udpBroadcaster.onReceiveMessage.AddListener(OnReceiveBroadcast);
+            lobbyState = LobbyState.InLobby;
+            timeoutRoomCleanCoroutine = StartCoroutine(CleanupTimeoutRoomsCoroutine());
         }
         #region 发送消息
         private void SendTCPMessage_PlayerInfoUpdated(PlayerInfo playerInfo)
@@ -396,8 +398,8 @@ namespace DreemurrStudio.Network.DEMO
             StopCoroutine(timeoutRoomCleanCoroutine);
             timeoutRoomCleanCoroutine = null;
             // 取消监听
-            udpBroadcaster.Close();
             udpBroadcaster.onReceiveMessage.RemoveListener(OnReceiveBroadcast);
+            udpBroadcaster.Close();
             lobbyState = LobbyState.NONE;
         }
         #endregion

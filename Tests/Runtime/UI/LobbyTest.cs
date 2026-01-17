@@ -469,7 +469,16 @@ namespace DreemurrStudio.Network.DEMO
         private void OnRoomUpdated(RoomInfo info, Dictionary<IPEndPoint, PlayerInfo> roomPlayers)
         {
             // 如果当前不在房间内，则先执行进入房间的UI逻辑
-            if(currentState != State.InRoom) DoEnterRoom(info);
+            switch (currentState)
+            {
+                case State.MainMenu:
+                    DoEnterRoom(info);
+                    break;
+                case State.InLobby:
+                    LobbyManager.Instance.ExitLobby();
+                    DoEnterRoom(info);
+                    break;
+            }
 
             var localIPEP = LobbyManager.Instance.LocalIPEP;
             // 全量更新玩家列表
