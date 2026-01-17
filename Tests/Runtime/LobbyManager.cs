@@ -101,6 +101,7 @@ namespace DreemurrStudio.Network.DEMO
         /// </summary>
         private PlayerInfo localPlayerInfo;
 
+        [SerializeField]
         /// <summary>
         /// 当前的大厅状态
         /// </summary>
@@ -342,9 +343,9 @@ namespace DreemurrStudio.Network.DEMO
         private void OnTCPClientConnectedToServer(IPEndPoint clientIPEP, IPEndPoint serverIPEP)
         {
             DoExitLobby();
+            lobbyState = LobbyState.Joined;
             tcpClient.OnReceivedMessage += OnClientReceiveRoomMessage;
             SendTCPMessage_PlayerInfoUpdated(localPlayerInfo);
-            lobbyState = LobbyState.Joined;
         }
 
         /// <summary>
@@ -386,6 +387,7 @@ namespace DreemurrStudio.Network.DEMO
         private void OnTCPClientDisconnectedFromServer(IPEndPoint clientIPEP, IPEndPoint serverIPEP)
         {
             lobbyState = LobbyState.NONE;
+            tcpClient.OnReceivedMessage -= OnClientReceiveRoomMessage;
             onLeftRoom?.Invoke();
         }
 
@@ -394,12 +396,14 @@ namespace DreemurrStudio.Network.DEMO
         /// </summary>
         private void DoExitLobby()
         {
-            if(lobbyState != LobbyState.InLobby) return;
-            StopCoroutine(timeoutRoomCleanCoroutine);
-            timeoutRoomCleanCoroutine = null;
             // 取消监听
-            udpBroadcaster.onReceiveMessage.RemoveListener(OnReceiveBroadcast);
+            udpBroadcaster.onReceiveMessage.RemoveAllListeners();
             udpBroadcaster.Close();
+            if(timeoutRoomCleanCoroutine != null)
+            {
+                StopCoroutine(timeoutRoomCleanCoroutine);
+                timeoutRoomCleanCoroutine = null;
+            }
             lobbyState = LobbyState.NONE;
         }
         #endregion
