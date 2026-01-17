@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using UnityEngine;
 using UnityEngine.UI;
@@ -181,6 +182,7 @@ namespace DreemurrStudio.Network.DEMO
             // 房间事件
             LobbyManager.Instance.onRoomUpdated += OnRoomUpdated;
             LobbyManager.Instance.onPlayerInfoUpdated += OnPlayerInfoUpdated;
+            LobbyManager.Instance.onPlayerLeft += OnPlayerLeftRoom;
             LobbyManager.Instance.onLeftRoom += OnLeftRoom;
             LobbyManager.Instance.onPlayerSpeak += OnPlayerSpeak;
             LobbyManager.Instance.onRoomClosed += OnRoomClosed;
@@ -209,10 +211,19 @@ namespace DreemurrStudio.Network.DEMO
                 LobbyManager.Instance.onLobbyRoomRemoved -= OnLobbyRoomRemoved;
                 LobbyManager.Instance.onRoomUpdated -= OnRoomUpdated;
                 LobbyManager.Instance.onPlayerInfoUpdated -= OnPlayerInfoUpdated;
+                LobbyManager.Instance.onPlayerLeft -= OnPlayerLeftRoom;
                 LobbyManager.Instance.onLeftRoom -= OnLeftRoom;
                 LobbyManager.Instance.onPlayerSpeak -= OnPlayerSpeak;
                 LobbyManager.Instance.onRoomClosed -= OnRoomClosed;
             }
+        }
+
+        private void OnPlayerLeftRoom(IPEndPoint ipep, PlayerInfo info)
+        {
+            if (!playerInfoItems.TryGetValue(ipep, out var item))
+                return;
+            playerInfoItems.Remove(ipep);
+            Destroy(item.gameObject);
         }
 
         #region 主菜单界面
@@ -275,6 +286,9 @@ namespace DreemurrStudio.Network.DEMO
         {
             LobbyManager.Instance.JoinRoom(roomIPEP, IPEP);
         }
+
+        [ContextMenu("加入测试房间")]
+        public void TestTryJoinRoom() => LobbyManager.Instance.JoinRoom(roomItems.Keys.ToList()[0], IPEP);
 
         /// <summary>
         /// 从大厅返回主菜单的按钮点击事件处理。

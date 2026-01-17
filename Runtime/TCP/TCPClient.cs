@@ -86,7 +86,7 @@ namespace DreemurrStudio.Network
         /// <summary>
         /// 获取当前连接到的服务器IP端点
         /// </summary>
-        public IPEndPoint ServerIPEP => client.Connected ? new IPEndPoint(IPAddress.Parse(serverIP), serverPort) : null;
+        public IPEndPoint ServerIPEP => client != null && client.Connected ? new IPEndPoint(IPAddress.Parse(serverIP), serverPort) : null;
 
         private void Start()
         { 
@@ -116,7 +116,7 @@ namespace DreemurrStudio.Network
             {
                 client = clientIPEP == null ? new TcpClient() : new TcpClient(clientIPEP);
                 // TODO:同步连接会阻塞，建议在Task中调用
-                client.Connect(serverIP, serverPort);
+                client.Connect(serverIPEP);
                 stream = client.GetStream();                
                 // 获取实际连接的服务器IP端点
                 var sep = (IPEndPoint)client.Client.RemoteEndPoint;
@@ -179,18 +179,18 @@ namespace DreemurrStudio.Network
         /// </summary>
         public void Disconnect()
         {
-            if (client == null) return;
+            if (!IsConnected) return;
             try
             {
-                stream?.Close();
-                client?.Close();
-                // 不建议Join自己的接收线程，容易死锁，尤其是如果Disconnect被接收线程调用时
-                if (receiveThread != null && Thread.CurrentThread != receiveThread)
-                    receiveThread.Join(500);                
                 UnityMainThreadDispatcher.Instance().Enqueue(() =>
                 {
                     OnDisconnectedFromServer?.Invoke(ClientIPEP, ServerIPEP);
                 });
+                stream?.Close();
+                client?.Close();
+                // 不建议Join自己的接收线程，容易死锁，尤其是如果Disconnect被接收线程调用时
+                if (receiveThread != null && Thread.CurrentThread != receiveThread)
+                    receiveThread.Join(500);
             }
             catch (Exception e)
             {

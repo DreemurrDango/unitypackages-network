@@ -288,6 +288,7 @@ namespace DreemurrStudio.Network.DEMO
         private void DoEnterLobby(string ipAddress)
         {
             discoveredRooms = new Dictionary<IPEndPoint, RoomInfo>();
+            if (timeoutRoomCleanCoroutine == null) timeoutRoomCleanCoroutine = StartCoroutine(CleanupTimeoutRoomsCoroutine());
             // 监听网络消息
             udpBroadcaster.Open(broadcastPort, ipAddress, true, true);
             udpBroadcaster.onReceiveMessage.AddListener(OnReceiveBroadcast);
@@ -467,6 +468,7 @@ namespace DreemurrStudio.Network.DEMO
             udpBroadcaster.Open(broadcastPort,roomInfo.hosterIP, false, true);
             tcpServer.StartServer(roomInfo.IPEP);
             tcpServer.OnReceivedMessage += OnServerReceiveRoomMessage;
+            tcpServer.OnClientDisconnected += OnClientDisconnected;
             roomPlayers = new Dictionary<IPEndPoint, PlayerInfo>();
             Debug.Log($"房间 '{roomInfo.roomName}' 已创建，TCP服务运行于: {tcpServer.ServerIPEP}");
             currrentRoomInfo = roomInfo;
@@ -525,6 +527,15 @@ namespace DreemurrStudio.Network.DEMO
                 default:
                     break;
             }
+        }
+
+        private void OnClientDisconnected(IPEndPoint clientIPEP)
+        {
+            if (!roomPlayers.TryGetValue(clientIPEP, out var info)) return;
+            roomPlayers.Remove(clientIPEP);
+            currrentRoomInfo.playerNum = roomPlayers.Count;
+            onPlayerLeft?.Invoke(clientIPEP, info);
+            SendTCPMessage_PlayerInfoUpdated(roomPlayers);
         }
 
         /// <summary>

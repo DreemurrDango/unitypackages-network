@@ -52,6 +52,7 @@ namespace DreemurrStudio.Network.DEMO
     public class S2C_PlayerInfoUpdateMessage : LobbyMessageDataBase
     {
         public RoomInfo roomInfo;
+        [JsonProperty]
         protected Dictionary<string,PlayerInfo> playerInfos;
 
 
