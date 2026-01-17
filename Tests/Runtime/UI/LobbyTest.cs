@@ -375,7 +375,7 @@ namespace DreemurrStudio.Network.DEMO
         public void OnReturnMainMenuFromRoomButtonDown()
         {
             if(LobbyManager.Instance.IsHoster)LobbyManager.Instance.CloseHostRoom();
-            else LobbyManager.Instance.ExitLobby();
+            else LobbyManager.Instance.LeaveRoom();
             roomPanelGO.SetActive(false);
             DoEnterMainMenu();
         }
@@ -492,6 +492,7 @@ namespace DreemurrStudio.Network.DEMO
         /// </summary>
         private void DoEnterRoom(RoomInfo roomInfo)
         {
+            lobbyPanelGO.SetActive(false);
             roomPanelGO.SetActive(true);
             currentState = State.InRoom;
             // 清空上一次的玩家列表和聊天记录

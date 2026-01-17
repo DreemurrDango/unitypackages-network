@@ -9,40 +9,6 @@ using UnityEngine;
 
 namespace DreemurrStudio.Network.DEMO
 {
-    //[System.Serializable]
-    //public struct IPID
-    //{
-    //    public string ip;
-    //    public int port;
-
-    //    /// <summary>
-    //    /// 获取或设置房主的TCP端点。
-    //    /// 这个属性作为辅助，不会被序列化。
-    //    /// </summary>
-    //    [JsonIgnore]
-    //    public IPEndPoint IPEP
-    //    {
-    //        get => new IPEndPoint(IPAddress.Parse(ip), port);
-    //        set
-    //        {
-    //            ip = value.Address.ToString();
-    //            port = value.Port;
-    //        }
-    //    }
-
-    //    public IPID(string ip,int port) { this.ip = ip;this.port = port; }
-    //    public IPID(IPEndPoint ipep) { this.ip = ipep.Address.ToString();this.port = ipep.Port; }
-
-    //    /// <summary>
-    //    /// 判断与指定IPEndPoint是否相等
-    //    /// </summary>
-    //    /// <param name="ipep"></param>
-    //    /// <returns></returns>
-    //    public bool Equals(IPEndPoint ipep) => ipep.Address.ToString() == ip && ipep.Port == port;
-
-    //    public override string ToString() => $"{ip}:{port}";
-    //}
-
     /// <summary>
     /// 房间列表信息结构体
     /// </summary>
@@ -52,7 +18,6 @@ namespace DreemurrStudio.Network.DEMO
         public string roomName;
         public string hosterName;
 
-        //public IPID hostIPID;
         public string hosterIP;
         public int hosterPort;
 
@@ -69,8 +34,6 @@ namespace DreemurrStudio.Network.DEMO
         [JsonIgnore]
         public IPEndPoint IPEP
         {
-            //get => hostIPID.IPEP;
-            //set => hostIPID.IPEP = value;
             get => new IPEndPoint(IPAddress.Parse(hosterIP), hosterPort);
             set
             {
@@ -469,10 +432,12 @@ namespace DreemurrStudio.Network.DEMO
             tcpServer.StartServer(roomInfo.IPEP);
             tcpServer.OnReceivedMessage += OnServerReceiveRoomMessage;
             tcpServer.OnClientDisconnected += OnClientDisconnected;
-            roomPlayers = new Dictionary<IPEndPoint, PlayerInfo>();
             Debug.Log($"房间 '{roomInfo.roomName}' 已创建，TCP服务运行于: {tcpServer.ServerIPEP}");
             currrentRoomInfo = roomInfo;
             currrentRoomInfo.IPEP = tcpServer.ServerIPEP;
+            // 初始化房间玩家列表，将房主自己加入列表
+            roomPlayers = new();
+            roomPlayers[tcpServer.ServerIPEP] = localPlayerInfo;
             lobbyState = LobbyState.Hosting;
             onRoomHosted?.Invoke(roomInfo);
             // 开始广播房间信息协程
