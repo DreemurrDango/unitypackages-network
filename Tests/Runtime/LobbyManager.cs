@@ -9,39 +9,40 @@ using UnityEngine;
 
 namespace DreemurrStudio.Network.DEMO
 {
-    [System.Serializable]
-    public struct IPID
-    {
-        public string ip;
-        public int port;
+    //[System.Serializable]
+    //public struct IPID
+    //{
+    //    public string ip;
+    //    public int port;
 
-        /// <summary>
-        /// 获取或设置房主的TCP端点。
-        /// 这个属性作为辅助，不会被序列化。
-        /// </summary>
-        [JsonIgnore]
-        public IPEndPoint IPEP
-        {
-            get => new IPEndPoint(IPAddress.Parse(ip), port);
-            set
-            {
-                ip = value.Address.ToString();
-                port = value.Port;
-            }
-        }
+    //    /// <summary>
+    //    /// 获取或设置房主的TCP端点。
+    //    /// 这个属性作为辅助，不会被序列化。
+    //    /// </summary>
+    //    [JsonIgnore]
+    //    public IPEndPoint IPEP
+    //    {
+    //        get => new IPEndPoint(IPAddress.Parse(ip), port);
+    //        set
+    //        {
+    //            ip = value.Address.ToString();
+    //            port = value.Port;
+    //        }
+    //    }
 
-        public IPID(string ip,int port) { this.ip = ip;this.port = port; }
-        public IPID(IPEndPoint ipep) { this.ip = ipep.Address.ToString();this.port = ipep.Port; }
+    //    public IPID(string ip,int port) { this.ip = ip;this.port = port; }
+    //    public IPID(IPEndPoint ipep) { this.ip = ipep.Address.ToString();this.port = ipep.Port; }
 
-        /// <summary>
-        /// 判断与指定IPEndPoint是否相等
-        /// </summary>
-        /// <param name="ipep"></param>
-        /// <returns></returns>
-        public bool Equals(IPEndPoint ipep) => ipep.Address.ToString() == ip && ipep.Port == port;
+    //    /// <summary>
+    //    /// 判断与指定IPEndPoint是否相等
+    //    /// </summary>
+    //    /// <param name="ipep"></param>
+    //    /// <returns></returns>
+    //    public bool Equals(IPEndPoint ipep) => ipep.Address.ToString() == ip && ipep.Port == port;
 
-        public override string ToString() => $"{ip}:{port}";
-    }
+    //    public override string ToString() => $"{ip}:{port}";
+    //}
+
     /// <summary>
     /// 房间列表信息结构体
     /// </summary>
@@ -51,7 +52,9 @@ namespace DreemurrStudio.Network.DEMO
         public string roomName;
         public string hosterName;
 
-        public IPID hostIPID;
+        //public IPID hostIPID;
+        public string hosterIP;
+        public int hosterPort;
 
         public int playerNum;
         //public int maxPlayer;
@@ -66,8 +69,14 @@ namespace DreemurrStudio.Network.DEMO
         [JsonIgnore]
         public IPEndPoint IPEP
         {
-            get => hostIPID.IPEP;
-            set => hostIPID.IPEP = value;
+            //get => hostIPID.IPEP;
+            //set => hostIPID.IPEP = value;
+            get => new IPEndPoint(IPAddress.Parse(hosterIP), hosterPort);
+            set
+            {
+                hosterIP = value.Address.ToString();
+                hosterPort = value.Port;
+            }
         }
 
         public string ToJson() => JsonConvert.SerializeObject(this);
@@ -197,7 +206,7 @@ namespace DreemurrStudio.Network.DEMO
         /// 作为游客所在房间有信息更新时的回调
         /// 参数为<当前房间信息,<IP字符串,玩家信息字典>>
         /// </summary>
-        public event Action<RoomInfo, Dictionary<IPID, PlayerInfo>> onRoomUpdated;
+        public event Action<RoomInfo, Dictionary<IPEndPoint, PlayerInfo>> onRoomUpdated;
         /// <summary>
         /// 作为游客离开房间时的回调
         /// </summary>
@@ -282,8 +291,6 @@ namespace DreemurrStudio.Network.DEMO
             // 监听网络消息
             udpBroadcaster.Open(broadcastPort, ipAddress, true, true);
             udpBroadcaster.onReceiveMessage.AddListener(OnReceiveBroadcast);
-            lobbyState = LobbyState.InLobby;
-            timeoutRoomCleanCoroutine = StartCoroutine(CleanupTimeoutRoomsCoroutine());
         }
         #region 发送消息
         private void SendTCPMessage_PlayerInfoUpdated(PlayerInfo playerInfo)
@@ -385,7 +392,7 @@ namespace DreemurrStudio.Network.DEMO
             {
                 case LobbyMessageType.S2C_PlayerInfoUpdated:
                     var infoData = JsonConvert.DeserializeObject<S2C_PlayerInfoUpdateMessage>(message);
-                    onRoomUpdated?.Invoke(infoData.roomInfo, infoData.playerInfos);
+                    onRoomUpdated?.Invoke(infoData.roomInfo, infoData.PlayerInfos);
                     break;
                 case LobbyMessageType.S2C_PlayerSpeak:
                     var speakData = JsonConvert.DeserializeObject<S2C_PlayerSpeakMessage>(message);
@@ -457,7 +464,7 @@ namespace DreemurrStudio.Network.DEMO
         {
             if (lobbyState == LobbyState.Hosting) return;
             // 1. 启动TCP服务器，端口号设为0时，系统会自动分配一个可用端口
-            udpBroadcaster.Open(broadcastPort,roomInfo.hostIPID.ip, false, true);
+            udpBroadcaster.Open(broadcastPort,roomInfo.hosterIP, false, true);
             tcpServer.StartServer(roomInfo.IPEP);
             tcpServer.OnReceivedMessage += OnServerReceiveRoomMessage;
             roomPlayers = new Dictionary<IPEndPoint, PlayerInfo>();
@@ -552,14 +559,11 @@ namespace DreemurrStudio.Network.DEMO
         /// <param name="playerInfos">所有更新的玩家信息</param>
         private void SendTCPMessage_PlayerInfoUpdated(Dictionary<IPEndPoint, PlayerInfo> playerInfos)
         {
-            var infos = new Dictionary<IPID, PlayerInfo>();
-            foreach (var kvp in playerInfos)
-                infos.Add(new IPID(kvp.Key), kvp.Value);
             var message = new S2C_PlayerInfoUpdateMessage
             {
                 messageType = LobbyMessageType.S2C_PlayerInfoUpdated,
                 roomInfo = currrentRoomInfo,
-                playerInfos = new(infos)
+                PlayerInfos = playerInfos
             };
             var json = JsonConvert.SerializeObject(message);
             tcpServer.SendToAllClients(json);

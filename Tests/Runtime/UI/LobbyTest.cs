@@ -265,7 +265,7 @@ namespace DreemurrStudio.Network.DEMO
         #endregion
 
         #region 大厅界面
-        private Dictionary<IPID, RoomItem> roomItems = new();
+        private Dictionary<IPEndPoint, RoomItem> roomItems = new();
 
         /// <summary>
         /// 大厅房间列表项中“加入”按钮的点击回调。
@@ -307,10 +307,10 @@ namespace DreemurrStudio.Network.DEMO
         /// <param name="info">被移除的房间信息。</param>
         private void OnLobbyRoomRemoved(RoomInfo info)
         {
-            if(roomItems.TryGetValue(info.hostIPID, out RoomItem item))
+            if(roomItems.TryGetValue(info.IPEP, out RoomItem item))
             {
                 item.OnJoinRoomButtonDown -= OnLobbyRoomItemJoinButtonDown;
-                roomItems.Remove(info.hostIPID);
+                roomItems.Remove(info.IPEP);
                 Destroy(item.gameObject);
             }
             roomNumText.text = $"共发现{roomItems.Count}个房间";
@@ -323,13 +323,13 @@ namespace DreemurrStudio.Network.DEMO
         private void OnLobbyRoomUpdated(RoomInfo info)
         {
             // 如果房间已存在于UI列表中，则更新它
-            if(roomItems.TryGetValue(info.hostIPID, out RoomItem item))
+            if(roomItems.TryGetValue(info.IPEP, out RoomItem item))
                 item.Info = info;
             else // 否则，创建一个新的UI项
             {
                 var newItem = CreateLobbyRoomItem(info);
                 newItem.OnJoinRoomButtonDown += OnLobbyRoomItemJoinButtonDown;
-                roomItems.Add(info.hostIPID, newItem);
+                roomItems.Add(info.IPEP, newItem);
             }
             roomNumText.text = $"共发现{roomItems.Count}个房间";
         }
@@ -352,7 +352,7 @@ namespace DreemurrStudio.Network.DEMO
         /// <summary>
         /// 存储房间内玩家信息的UI项列表。
         /// </summary>
-        private Dictionary<IPID, PlayerInfoItem> playerInfoItems = new();
+        private Dictionary<IPEndPoint, PlayerInfoItem> playerInfoItems = new();
         /// <summary>
         /// 存储房间聊天消息的UI项队列。
         /// </summary>
@@ -387,8 +387,8 @@ namespace DreemurrStudio.Network.DEMO
             talkInputField.text = string.Empty;
             // 将房主自己添加到玩家列表中
             var playerInfo = new PlayerInfo() { playerName = PlayerName };
-            var item = CreatePlayerInfoItem(playerInfo, info.hostIPID.ToString() , true, true);
-            playerInfoItems.Add(info.hostIPID, item);
+            var item = CreatePlayerInfoItem(playerInfo, info.IPEP.ToString() , true, true);
+            playerInfoItems.Add(info.IPEP, item);
         }
 
         /// <summary>
@@ -437,14 +437,13 @@ namespace DreemurrStudio.Network.DEMO
         {
             var localIPEP = LobbyManager.Instance.LocalIPEP;
             var hosterIPEP = LobbyManager.Instance.CurrentRoomIPEP;
-            var ipid = new IPID(ipep);
             // 更新或创建玩家UI项
-            if (playerInfoItems.TryGetValue(ipid, out var item))
+            if (playerInfoItems.TryGetValue(ipep, out var item))
                 item.Init(info.playerName, ipep.ToString(), ipep.Equals(hosterIPEP), ipep.Equals(localIPEP));
             else
             {
                 var newItem = CreatePlayerInfoItem(info, ipep.ToString(), ipep.Equals(hosterIPEP), ipep.Equals(localIPEP));
-                playerInfoItems.Add(ipid, newItem);
+                playerInfoItems.Add(ipep, newItem);
             }
         }
 
@@ -453,7 +452,7 @@ namespace DreemurrStudio.Network.DEMO
         /// </summary>
         /// <param name="info">房间的最新信息。</param>
         /// <param name="roomPlayers">房间内所有玩家的完整列表。</param>
-        private void OnRoomUpdated(RoomInfo info, Dictionary<IPID, PlayerInfo> roomPlayers)
+        private void OnRoomUpdated(RoomInfo info, Dictionary<IPEndPoint, PlayerInfo> roomPlayers)
         {
             // 如果当前不在房间内，则先执行进入房间的UI逻辑
             if(currentState != State.InRoom) DoEnterRoom(info);
