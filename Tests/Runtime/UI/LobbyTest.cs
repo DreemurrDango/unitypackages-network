@@ -433,17 +433,18 @@ namespace DreemurrStudio.Network.DEMO
         /// </summary>
         /// <param name="ipep">玩家的IP端点。</param>
         /// <param name="info">玩家的最新信息。</param>
-        private void OnPlayerInfoUpdated(IPID ipep, PlayerInfo info)
+        private void OnPlayerInfoUpdated(IPEndPoint ipep, PlayerInfo info)
         {
             var localIPEP = LobbyManager.Instance.LocalIPEP;
             var hosterIPEP = LobbyManager.Instance.CurrentRoomIPEP;
+            var ipid = new IPID(ipep);
             // 更新或创建玩家UI项
-            if (playerInfoItems.TryGetValue(ipep, out var item))
+            if (playerInfoItems.TryGetValue(ipid, out var item))
                 item.Init(info.playerName, ipep.ToString(), ipep.Equals(hosterIPEP), ipep.Equals(localIPEP));
             else
             {
                 var newItem = CreatePlayerInfoItem(info, ipep.ToString(), ipep.Equals(hosterIPEP), ipep.Equals(localIPEP));
-                playerInfoItems.Add(ipep, newItem);
+                playerInfoItems.Add(ipid, newItem);
             }
         }
 
