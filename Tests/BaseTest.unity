@@ -136,10 +136,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3957872553933794113, guid: 85aef5e1127109a48af362b31e164a2b, type: 3}
       propertyPath: serverIP
-      value: 192.168.2.114
+      value: 192.168.2.115
       objectReference: {fileID: 0}
     - target: {fileID: 3957872553933794113, guid: 85aef5e1127109a48af362b31e164a2b, type: 3}
       propertyPath: showFullDebug
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3957872553933794113, guid: 85aef5e1127109a48af362b31e164a2b, type: 3}
+      propertyPath: useLengthHead
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4966404959925911634, guid: 85aef5e1127109a48af362b31e164a2b, type: 3}
@@ -256,67 +260,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5fee7778bf45e554db08e5b886931200, type: 3}
---- !u!4 &832698172 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 5818178112786011822, guid: 46ac2c308a659a141a68b008d3f7142a, type: 3}
-  m_PrefabInstance: {fileID: 1159404283}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &945240960
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 945240962}
-  - component: {fileID: 945240961}
-  m_Layer: 0
-  m_Name: GameObject
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!114 &945240961
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 945240960}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ef0743864800d1c4eb0e1cb6269c4e13, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  localIP: 192.168.2.114
-  localPort: 9999
-  openOnAwake: 1
-  onReceiveMessage:
-    m_PersistentCalls:
-      m_Calls: []
-  receiveIP: 192.168.2.115
-  receivePort: 9999
-  receivedMessage: 111
-  targetIP: 192.168.2.115
-  targetPort: 9999
-  sendMessage: "\u6A21\u62DF\u53D1\u9001\u6D88\u606F"
---- !u!4 &945240962
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 945240960}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 832698172}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1079360050
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -327,11 +270,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3800374787901256372, guid: e078e80e4fb018b4bbb994f8984030c6, type: 3}
       propertyPath: clientIP
-      value: 192.168.2.114
+      value: 192.168.2.115
       objectReference: {fileID: 0}
     - target: {fileID: 3800374787901256372, guid: e078e80e4fb018b4bbb994f8984030c6, type: 3}
       propertyPath: serverIP
-      value: 192.168.2.115
+      value: 192.168.2.114
       objectReference: {fileID: 0}
     - target: {fileID: 3800374787901256372, guid: e078e80e4fb018b4bbb994f8984030c6, type: 3}
       propertyPath: serverPort
@@ -339,6 +282,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3800374787901256372, guid: e078e80e4fb018b4bbb994f8984030c6, type: 3}
       propertyPath: showFullDebug
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3800374787901256372, guid: e078e80e4fb018b4bbb994f8984030c6, type: 3}
+      propertyPath: useLengthHead
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3800374787901256372, guid: e078e80e4fb018b4bbb994f8984030c6, type: 3}
@@ -488,10 +435,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects:
-    - targetCorrespondingSourceObject: {fileID: 5818178112786011822, guid: 46ac2c308a659a141a68b008d3f7142a, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 945240962}
+    m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 46ac2c308a659a141a68b008d3f7142a, type: 3}
 --- !u!1 &1353423867

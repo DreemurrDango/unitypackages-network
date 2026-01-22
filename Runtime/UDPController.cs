@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -246,6 +246,30 @@ namespace DreemurrStudio.Network
                 Debug.LogWarning($"UDP数据{debugRemake}发送失败，请检查网络情况\n异常信息：{e}");
             }
         }
+
+        /// <summary>
+        /// 发送广播字节数据的封装方法，便于复用
+        /// </summary>
+        /// <param name="data">要广播发送的字节数据</param>
+        /// <param name="targetPort">目标端口，默认为9999</param>
+        /// <param name="debugRemake">附带调试信息</param>
+        public void BroadcastUDPMessage(byte[] data, int targetPort = 9999, string debugRemake = "")
+        {
+            if (!enableBroadcast) Debug.LogWarning("未开启广播发送，发送失败");
+            SendUDPMessage(IPAddress.Broadcast.ToString(), targetPort, data, debugRemake);
+        }
+        /// <summary>
+        /// 发广播文本数据
+        /// </summary>
+        /// <param name="message">要发送的文本消息</param>
+        /// <param name="targetPort">要发送的目标端口，默认为9999</param>
+        /// <param name="debugRemake">用于调试的信息</param>
+        public void BroadcastUDPMessage(string message, int targetPort = 9999, string debugRemake = "文本数据")
+        {
+            if (!enableBroadcast) Debug.LogWarning("未开启广播发送，发送失败");
+            SendUDPMessage(IPAddress.Broadcast.ToString(), targetPort, message);
+        }
+
 
         private void OnApplicationQuit()
         {
