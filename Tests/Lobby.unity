@@ -1458,8 +1458,12 @@ PrefabInstance:
       value: 60206
       objectReference: {fileID: 0}
     - target: {fileID: 3800374787901256372, guid: e078e80e4fb018b4bbb994f8984030c6, type: 3}
-      propertyPath: connectOnStart
+      propertyPath: showFullDebug
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3800374787901256372, guid: e078e80e4fb018b4bbb994f8984030c6, type: 3}
+      propertyPath: connectOnStart
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3800374787901256372, guid: e078e80e4fb018b4bbb994f8984030c6, type: 3}
       propertyPath: autoGetClientIPEP
@@ -1917,6 +1921,10 @@ PrefabInstance:
     - target: {fileID: 3957872553933794113, guid: 85aef5e1127109a48af362b31e164a2b, type: 3}
       propertyPath: startOnStart
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3957872553933794113, guid: 85aef5e1127109a48af362b31e164a2b, type: 3}
+      propertyPath: showFullDebug
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4966404959925911634, guid: 85aef5e1127109a48af362b31e164a2b, type: 3}
       propertyPath: m_Name
@@ -4987,8 +4995,9 @@ MonoBehaviour:
   tcpServer: {fileID: 624161520}
   tcpClient: {fileID: 384240720}
   broadcastPort: 9999
-  broadcastInterval: 1
+  broadcastInterval: 2
   roomTimeout: 5
+  lobbyState: 0
 --- !u!1 &1207926477
 GameObject:
   m_ObjectHideFlags: 0

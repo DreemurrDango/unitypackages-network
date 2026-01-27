@@ -342,12 +342,24 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 3800374787901256372, guid: e078e80e4fb018b4bbb994f8984030c6, type: 3}
+      propertyPath: clientIP
+      value: 192.168.2.115
+      objectReference: {fileID: 0}
+    - target: {fileID: 3800374787901256372, guid: e078e80e4fb018b4bbb994f8984030c6, type: 3}
+      propertyPath: serverIP
+      value: 192.168.2.114
+      objectReference: {fileID: 0}
+    - target: {fileID: 3800374787901256372, guid: e078e80e4fb018b4bbb994f8984030c6, type: 3}
       propertyPath: clientPort
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3800374787901256372, guid: e078e80e4fb018b4bbb994f8984030c6, type: 3}
       propertyPath: serverPort
       value: 8888
+      objectReference: {fileID: 0}
+    - target: {fileID: 3800374787901256372, guid: e078e80e4fb018b4bbb994f8984030c6, type: 3}
+      propertyPath: showFullDebug
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3800374787901256372, guid: e078e80e4fb018b4bbb994f8984030c6, type: 3}
       propertyPath: useLengthHead
